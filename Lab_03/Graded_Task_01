@@ -1,0 +1,136 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // so i dont write std:: everywhere
+
+struct Nodetype       // node of the doubly linked list
+{
+    int data;         // value stored in the node
+    Nodetype *next;   // pointer to the next node
+    Nodetype *prev;   // pointer to the previous node, this is what makes it doubly
+};
+
+Nodetype *first = NULL;   // first node pointer, NULL because list is empty at start
+Nodetype *last = NULL;    // last node pointer, NULL in the begining too
+
+void insert_end()         // insert at the end (activity 1 of the manual)
+{
+    Nodetype *p;          // temp pointer for the new node
+    p = new Nodetype;     // making new node at runtime with new
+    cout << "Enter the data in node: ";   // asking user for value
+    cin >> p->data;       // read value into the node
+    p->next = NULL;       // new node will be last so next is NULL
+    p->prev = NULL;       // setting prev NULL for now, it changes below if list isnt empty
+    if (first == NULL)    // checking if list is empty
+    {
+        first = last = p; // only node so first and last are same
+    }
+    else
+    {
+        last->next = p;   // old last node points forward to new node
+        p->prev = last;   // new node points back to old last node
+        last = p;         // last pointer moves to the new node
+    }
+}
+
+void display_forward()    // prints list from first to last
+{
+    Nodetype *p;          // pointer to walk the list
+    if (first == NULL)    // empty check
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;           // nothing to print
+    }
+    for (p = first; p != NULL; p = p->next)   // going forward using next, same as the manual
+    {
+        cout << p->data << " ";   // print the value
+    }
+    cout << endl;         // new line
+}
+
+void display_backward()   // prints list from last to first, good to check that prev pointers are right
+{
+    Nodetype *p;          // walking pointer
+    if (last == NULL)     // empty check
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;           // leave
+    }
+    for (p = last; p != NULL; p = p->prev)   // going backward using prev
+    {
+        cout << p->data << " ";   // print value
+    }
+    cout << endl;         // new line
+}
+
+// ---------- LAB TASK 1 starts from here ----------
+
+void reverseList()        // reverses the list by changing the pointers, not the data
+{
+    Nodetype *p = first;  // start from first node
+    Nodetype *temp = NULL;   // temp is needed to swap two pointers, like swapping 2 variables
+
+    while (p != NULL)     // visit every node once
+    {
+        temp = p->prev;   // save the prev pointer of this node
+        p->prev = p->next;   // prev now takes whatever next was
+        p->next = temp;   // next takes the old prev, so the node's direction is flipped
+        p = p->prev;      // move to the next node of the ORIGINAL list, which is now stored in prev (since we swapped)
+    }
+
+    temp = first;         // now first and last also need to be swapped
+    first = last;         // old last becomes the new first
+    last = temp;          // old first becomes the new last
+}
+
+void deleteAll()          // frees all nodes at end (activity 5)
+{
+    Nodetype *p;          // temp pointer
+    while (first != NULL) // till list is empty
+    {
+        p = first;        // keep the first node
+        first = first->next;   // move first ahead
+        delete p;         // free memory
+    }
+    last = NULL;          // list is empty so last is NULL
+}
+
+int main()   // main with menu
+{
+    int choice;   // stores user's choice
+
+    do   // do while so menu comes atleast once
+    {
+        cout << "\n----- Doubly Linked List Menu -----" << endl;   // heading
+        cout << "1. Insert at end" << endl;          // option 1
+        cout << "2. Display forward" << endl;        // option 2
+        cout << "3. Display backward" << endl;       // option 3
+        cout << "4. Reverse the list" << endl;       // option 4 (the task)
+        cout << "0. Exit" << endl;                   // quit option
+        cout << "Enter your choice: ";               // ask
+        cin >> choice;                               // read
+
+        switch (choice)   // switch for the menu
+        {
+        case 1:
+            insert_end();        // insert a node
+            break;               // stop this case
+        case 2:
+            display_forward();   // forward print
+            break;               // stop
+        case 3:
+            display_backward();  // backward print
+            break;               // stop
+        case 4:
+            reverseList();       // reverse it
+            cout << "List reversed" << endl;   // confirm to user
+            break;               // stop
+        case 0:
+            cout << "Bye!" << endl;   // goodbye
+            break;               // leave switch
+        default:
+            cout << "Invalid choice" << endl;   // wrong input
+        }
+    } while (choice != 0);   // repeat till user enters 0
+
+    deleteAll();   // free memory
+    return 0;      // all fine
+}

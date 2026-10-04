@@ -1,0 +1,152 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // so std:: is not needed
+
+struct Nodetype       // node of the singly linked list
+{
+    int data;         // stored value
+    Nodetype *next;   // pointer to the next node
+};
+
+Nodetype *first = NULL;   // first node pointer, NULL = empty list
+Nodetype *last = NULL;    // last node pointer
+
+void insert_end()         // insert at end like activity 1
+{
+    Nodetype *p;          // temp pointer
+    p = new Nodetype;     // allocate new node
+    cout << "Enter the data in node: ";   // ask for value
+    cin >> p->data;       // read the value
+    p->next = NULL;       // last node so next is NULL
+    if (first == NULL)    // is list empty?
+    {
+        first = last = p; // single node, so both point to it
+    }
+    else
+    {
+        last->next = p;   // connect old last with new node
+        last = p;         // move last to new node
+    }
+}
+
+void insert_start()       // insert at start like activity 2
+{
+    Nodetype *p;          // temp pointer
+    p = new Nodetype;     // new node
+    cout << "Enter the data in node: ";   // ask for value
+    cin >> p->data;       // read it
+    p->next = NULL;       // safe default
+    if (first == NULL)    // empty check
+    {
+        first = last = p; // both point to same node
+    }
+    else
+    {
+        p->next = first;  // new node points to old first
+        first = p;        // first becomes the new node
+    }
+}
+
+void display()            // prints whole list
+{
+    Nodetype *p = first;  // begin from first
+    if (p == NULL)        // empty list
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;           // leave
+    }
+    while (p != NULL)     // go till end
+    {
+        cout << p->data << " ";   // print value
+        p = p->next;      // move forward
+    }
+    cout << endl;         // new line
+}
+
+void deleteAll()          // frees all nodes at the end
+{
+    Nodetype *p;          // temp pointer
+    while (first != NULL) // till empty
+    {
+        p = first;        // save first node
+        first = first->next;   // move first ahead
+        delete p;         // free it
+    }
+    last = NULL;          // empty list so last is NULL too
+}
+
+// ---------- LAB TASK 3 starts from here ----------
+
+void findOccurrences(int key)   // finds ALL the places where key appears in the list, not just the first one
+{
+    Nodetype *p = first;        // start from the first node
+    int position = 1;           // keeps track of node number, starting from 1 because its easier for users
+    int count = 0;              // counts how many times key was found, 0 at start
+
+    if (first == NULL)          // empty list check
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;                 // nothing to search
+    }
+
+    cout << "Positions of " << key << ": ";   // heading for the output
+    while (p != NULL)           // loop through the entire list (we dont stop at first match like the search() in activity 3)
+    {
+        if (p->data == key)     // current node has the key
+        {
+            cout << position << " ";   // print which position it was found on
+            count++;            // one more occurence found
+        }
+        p = p->next;            // move to next node
+        position++;             // position goes up by one too
+    }
+
+    if (count == 0)             // loop is over and nothing matched
+    {
+        cout << "none";         // no positions to show
+    }
+    cout << endl;               // new line
+    cout << key << " found " << count << " time(s)" << endl;   // final total
+}
+
+int main()   // main with menu
+{
+    int choice, key;   // choice for menu, key is value to look for
+
+    do   // menu shows atleast once
+    {
+        cout << "\n----- Linked List Menu -----" << endl;   // heading
+        cout << "1. Insert at end" << endl;                 // option 1
+        cout << "2. Insert at start" << endl;               // option 2
+        cout << "3. Display list" << endl;                  // option 3
+        cout << "4. Find multiple occurrences of a value" << endl;   // option 4 (the task)
+        cout << "0. Exit" << endl;                          // quit option
+        cout << "Enter your choice: ";                      // ask user
+        cin >> choice;                                      // read it
+
+        switch (choice)   // switch for menu
+        {
+        case 1:
+            insert_end();   // insert at end
+            break;          // stop this case
+        case 2:
+            insert_start(); // insert at start
+            break;          // stop
+        case 3:
+            display();      // show the list
+            break;          // stop
+        case 4:
+            cout << "Enter value to search: ";   // ask which value
+            cin >> key;                          // read it
+            findOccurrences(key);                // call the function
+            break;                               // stop
+        case 0:
+            cout << "Bye!" << endl;   // goodbye
+            break;          // leave switch
+        default:
+            cout << "Invalid choice" << endl;   // wrong input
+        }
+    } while (choice != 0);   // repeat till 0
+
+    deleteAll();   // free memory before exiting
+    return 0;      // finished fine
+}

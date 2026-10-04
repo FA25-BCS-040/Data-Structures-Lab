@@ -1,0 +1,203 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // skip std::
+
+struct Nodetype       // doubly linked list node
+{
+    int data;         // value
+    Nodetype *next;   // next node address
+    Nodetype *prev;   // previous node address
+};
+
+Nodetype *first = NULL;   // first node, NULL = empty
+Nodetype *last = NULL;    // last node
+
+void insert_end()         // insert at end
+{
+    Nodetype *p;          // temp pointer
+    p = new Nodetype;     // new node
+    cout << "Enter the data in node: ";   // ask value
+    cin >> p->data;       // read it
+    p->next = NULL;       // will be last so next is NULL
+    p->prev = NULL;       // prev NULL for now
+    if (first == NULL)    // empty list?
+    {
+        first = last = p; // first and last same node
+    }
+    else
+    {
+        last->next = p;   // link old last to new node
+        p->prev = last;   // link new node back to old last
+        last = p;         // update last
+    }
+}
+
+void display_forward()    // print first to last
+{
+    Nodetype *p;          // walking pointer
+    if (first == NULL)    // empty check
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;           // leave
+    }
+    for (p = first; p != NULL; p = p->next)   // go forward
+    {
+        cout << p->data << " ";   // print value
+    }
+    cout << endl;         // new line
+}
+
+void display_backward()   // print last to first, to check prev pointers after swapping
+{
+    Nodetype *p;          // walking pointer
+    if (last == NULL)     // empty check
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;           // leave
+    }
+    for (p = last; p != NULL; p = p->prev)   // go backward
+    {
+        cout << p->data << " ";   // print value
+    }
+    cout << endl;         // new line
+}
+
+Nodetype *search(int key)   // returns pointer to the node having key, NULL if not found (activity 3 of lab 2 but for this list)
+{
+    Nodetype *p = first;    // begin from first
+    while (p != NULL && p->data != key)   // go on till end or till we find the key
+    {
+        p = p->next;        // next node
+    }
+    return p;               // NULL if not found
+}
+
+// ---------- LAB TASK 2 starts from here ----------
+
+void swapNodes(int v1, int v2)   // takes 2 values, finds them and swaps the NODES (not the data inside them)
+{
+    Nodetype *a = search(v1);    // find node of first value
+    Nodetype *b = search(v2);    // find node of second value
+
+    if (a == NULL || b == NULL)  // if any one is missing
+    {
+        cout << "Both values are not present in the list, cant swap" << endl;   // tell the user
+        return;                  // stop here
+    }
+    if (a == b)                  // same node (same value entered twice)
+    {
+        cout << "Both values are same node, nothing to swap" << endl;   // nothing to do
+        return;                  // leave
+    }
+
+    Nodetype *t;                 // temp pointer for swapping a and b if needed
+    Nodetype *p = first;         // pointer to check which node comes first
+    while (p != a && p != b)     // go forward till we hit one of them
+    {
+        p = p->next;             // move ahead
+    }
+    if (p == b)                  // b came first in the list
+    {
+        t = a;                   // swap the pointers a and b
+        a = b;                   // so that a is always the one before b
+        b = t;                   // this makes the logic below much easier
+    }
+
+    Nodetype *aPrev = a->prev;   // saving all 4 neighbours before changing anything, otherwise we lose them
+    Nodetype *aNext = a->next;   // node after a
+    Nodetype *bPrev = b->prev;   // node before b
+    Nodetype *bNext = b->next;   // node after b
+
+    if (aNext == b)              // special case, a and b are right next to each other
+    {
+        b->prev = aPrev;         // b goes to a's old place so its prev is a's old prev
+        b->next = a;             // a is now after b
+        a->prev = b;             // a points back to b
+        a->next = bNext;         // a takes b's old next
+    }
+    else                         // normal case, they are far from each other
+    {
+        a->prev = bPrev;         // a goes to b's old place
+        a->next = bNext;         // a takes b's next
+        b->prev = aPrev;         // b goes to a's old place
+        b->next = aNext;         // b takes a's next
+        aNext->prev = b;         // node after a's old place must point back to b (aNext cant be NULL here because b is after a)
+        bPrev->next = a;         // node before b's old place must point forward to a
+    }
+
+    if (aPrev != NULL)           // a had a node before it
+    {
+        aPrev->next = b;         // that node now points to b
+    }
+    else                         // a was the first node
+    {
+        first = b;               // so b is first now
+    }
+
+    if (bNext != NULL)           // b had a node after it
+    {
+        bNext->prev = a;         // that node points back to a now
+    }
+    else                         // b was the last node
+    {
+        last = a;                // so a is last now
+    }
+
+    cout << "Nodes swapped successfully" << endl;   // confirmation
+}
+
+void deleteAll()          // free all nodes
+{
+    Nodetype *p;          // temp pointer
+    while (first != NULL) // till empty
+    {
+        p = first;        // save first
+        first = first->next;   // move ahead
+        delete p;         // free it
+    }
+    last = NULL;          // empty list
+}
+
+int main()   // main with menu
+{
+    int choice, v1, v2;   // menu choice and the two values for swapping
+
+    do   // menu runs atleast once
+    {
+        cout << "\n----- Doubly Linked List Menu -----" << endl;   // heading
+        cout << "1. Insert at end" << endl;        // option 1
+        cout << "2. Display forward" << endl;      // option 2
+        cout << "3. Display backward" << endl;     // option 3
+        cout << "4. Swap two nodes by value" << endl;   // option 4 (the task)
+        cout << "0. Exit" << endl;                 // quit
+        cout << "Enter your choice: ";             // ask
+        cin >> choice;                             // read
+
+        switch (choice)   // switch for menu
+        {
+        case 1:
+            insert_end();        // insert
+            break;               // stop
+        case 2:
+            display_forward();   // show forward
+            break;               // stop
+        case 3:
+            display_backward();  // show backward
+            break;               // stop
+        case 4:
+            cout << "Enter first value: ";    // ask first value
+            cin >> v1;                        // read it
+            cout << "Enter second value: ";   // ask second value
+            cin >> v2;                        // read it
+            swapNodes(v1, v2);                // call the swap function
+            break;                            // stop
+        case 0:
+            cout << "Bye!" << endl;   // goodbye
+            break;               // leave switch
+        default:
+            cout << "Invalid choice" << endl;   // wrong input
+        }
+    } while (choice != 0);   // repeat till 0
+
+    deleteAll();   // free memory
+    return 0;      // done
+}

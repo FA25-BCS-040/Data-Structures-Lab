@@ -1,0 +1,30 @@
+#include <iostream>   // need this so i can use cout and cin
+using namespace std;  // so i dont have to write std:: everytime
+
+int main()   // main function, program starts from here
+{
+    int start, stop;   // start and stop will hold the range the user types in
+    int x;             // x is the current number inside the loop
+    long long sum = 0; // sum stores the answer, set to 0 first otherwise it has garbage in it. long long so it dosent overflow quickly
+
+    cout << "Enter starting value: ";  // telling the user what to type
+    cin >> start;                      // take the starting value from user
+
+    cout << "Enter stopping value: ";  // asking for the end value now
+    cin >> stop;                       // store it in stop
+
+    if (start > stop)   // checking if user entered them the wrong way round
+    {
+        cout << "Starting value is bigger than stopping value, try again" << endl;  // error msg so they know whats wrong
+        return 1;       // end the program here because the loop wont work properly
+    }
+
+    for (x = start; x <= stop; x++)   // loop from start till stop, including stop, x goes up by 1 each time
+    {
+        sum = sum + (x * x);          // square the current x and add it to the running total
+    }
+
+    cout << "Sum of X^2 from " << start << " to " << stop << " = " << sum << endl;  // show the final answer
+
+    return 0;   // 0 means program ended fine
+}

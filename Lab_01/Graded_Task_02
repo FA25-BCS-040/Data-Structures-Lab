@@ -1,0 +1,226 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // skip writing std:: all the time
+
+#define MAX 100       // max size of the array list, i made it 100 so its big enough
+
+int list[MAX];        // the actual array that stores the values
+int n = 0;            // n is how many elements are in the list right now, starts at 0 coz its empty
+
+void insertEnd(int val)        // function 1: put value at the end
+{
+    if (n == MAX)              // check if array is already full
+    {
+        cout << "List is full" << endl;   // cant add more so tell the user
+        return;                // leave the function
+    }
+    list[n] = val;             // n is the first empty spot so put the value there
+    n++;                       // size increases by one now
+}
+
+void insertStart(int val)      // function 2: put value at the start
+{
+    if (n == MAX)              // same full check as before
+    {
+        cout << "List is full" << endl;   // message for full list
+        return;                // stop here
+    }
+    for (int i = n; i > 0; i--)   // going from the back so we dont overwrite anything
+    {
+        list[i] = list[i - 1];    // shift every element one place to the right to make space at index 0
+    }
+    list[0] = val;             // now index 0 is free so put the new value
+    n++;                       // size goes up
+}
+
+void insertAfter(int key, int val)   // function 3: insert val after a specific value (key)
+{
+    if (n == MAX)              // full check again
+    {
+        cout << "List is full" << endl;   // cant insert
+        return;                // exit
+    }
+    int pos = -1;              // pos will store index of key, -1 means not found yet
+    for (int i = 0; i < n; i++)   // loop through the list to find the key
+    {
+        if (list[i] == key)    // if current element is the key
+        {
+            pos = i;           // remember where it is
+            break;             // no need to keep looking, first match is enough
+        }
+    }
+    if (pos == -1)             // loop finished and key was never found
+    {
+        cout << key << " not found in the list" << endl;   // let the user know
+        return;                // nothing to insert after
+    }
+    for (int i = n; i > pos + 1; i--)   // shifting elements right, only those that come after the key
+    {
+        list[i] = list[i - 1];          // move each one a step to the right
+    }
+    list[pos + 1] = val;       // spot right after key is empty now, put value here
+    n++;                       // list got bigger
+}
+
+void insertBefore(int key, int val)   // function 4: insert val before a specific value (key)
+{
+    if (n == MAX)              // full check
+    {
+        cout << "List is full" << endl;   // cant add
+        return;                // go out of function
+    }
+    int pos = -1;              // -1 means key not found yet
+    for (int i = 0; i < n; i++)   // search for the key in the list
+    {
+        if (list[i] == key)    // found it
+        {
+            pos = i;           // save the index
+            break;             // stop searching
+        }
+    }
+    if (pos == -1)             // never found
+    {
+        cout << key << " not found in the list" << endl;   // tell the user
+        return;                // cant insert before something that dosent exist
+    }
+    for (int i = n; i > pos; i--)   // shift from key's position onwards to the right (key moves too this time)
+    {
+        list[i] = list[i - 1];      // copy previous element into current place
+    }
+    list[pos] = val;           // key's old spot is free now so new value goes in
+    n++;                       // size + 1
+}
+
+void display()                 // function 5: show the whole list
+{
+    if (n == 0)                // if nothing is in the list
+    {
+        cout << "List is empty" << endl;   // say its empty
+        return;                // nothing to print
+    }
+    cout << "List: ";          // label before the values
+    for (int i = 0; i < n; i++)   // go from first element to last one (only till n not MAX)
+    {
+        cout << list[i] << " ";   // print each value with a space in between
+    }
+    cout << endl;              // new line at the end so output looks neat
+}
+
+void deleteEnd()               // function 6: remove last value
+{
+    if (n == 0)                // cant delete from empty list
+    {
+        cout << "List is empty, nothing to delete" << endl;   // warn user
+        return;                // leave
+    }
+    cout << list[n - 1] << " deleted from end" << endl;   // show which value is being removed
+    n--;                       // just reducing size is enough, the last element is ignored after that
+}
+
+void deleteStart()             // function 7: remove first value
+{
+    if (n == 0)                // empty check
+    {
+        cout << "List is empty, nothing to delete" << endl;   // message
+        return;                // exit function
+    }
+    cout << list[0] << " deleted from start" << endl;   // print what is removed
+    for (int i = 0; i < n - 1; i++)   // shift everything one place to the left to fill the gap
+    {
+        list[i] = list[i + 1];        // next element comes into current place
+    }
+    n--;                       // one less element now
+}
+
+void deleteValue(int val)      // function 8: delete a specific value
+{
+    int pos = -1;              // -1 = not found
+    for (int i = 0; i < n; i++)   // look for the value
+    {
+        if (list[i] == val)    // match found
+        {
+            pos = i;           // store the index
+            break;             // stop at first match
+        }
+    }
+    if (pos == -1)             // value is not in the list
+    {
+        cout << val << " not found in the list" << endl;   // tell the user
+        return;                // nothing to delete
+    }
+    for (int i = pos; i < n - 1; i++)   // start from the found position and move everything after it left
+    {
+        list[i] = list[i + 1];          // overwrite the current element with the next one
+    }
+    n--;                       // size goes down
+    cout << val << " deleted from the list" << endl;   // confirm deletion
+}
+
+int main()   // main, where the menu is
+{
+    int choice, val, key;   // choice = menu option, val = value to insert/delete, key = value we search for
+
+    do   // do while so the menu shows atleast once
+    {
+        cout << "\n----- Array List Menu -----" << endl;   // heading of menu
+        cout << "1. Insert at end" << endl;                // option 1
+        cout << "2. Insert at start" << endl;              // option 2
+        cout << "3. Insert after a value" << endl;         // option 3
+        cout << "4. Insert before a value" << endl;        // option 4
+        cout << "5. Display list" << endl;                 // option 5
+        cout << "6. Delete from end" << endl;              // option 6
+        cout << "7. Delete from start" << endl;            // option 7
+        cout << "8. Delete a specific value" << endl;      // option 8
+        cout << "0. Exit" << endl;                         // option to quit
+        cout << "Enter your choice: ";                     // ask for input
+        cin >> choice;                                     // read what user picked
+
+        switch (choice)   // switch is cleaner than writing alot of if else
+        {
+        case 1:   // insert at end
+            cout << "Enter value: ";   // ask for the value
+            cin >> val;                // read it
+            insertEnd(val);            // call the function
+            break;                     // break so it dosent fall into the next case
+        case 2:   // insert at start
+            cout << "Enter value: ";   // ask value
+            cin >> val;                // read it
+            insertStart(val);          // call function
+            break;                     // stop here
+        case 3:   // insert after
+            cout << "Insert after which value? ";   // need the key first
+            cin >> key;                             // read key
+            cout << "Enter value to insert: ";      // now the new value
+            cin >> val;                             // read it
+            insertAfter(key, val);                  // call function with both
+            break;                                  // done with this case
+        case 4:   // insert before
+            cout << "Insert before which value? ";  // need key
+            cin >> key;                             // read key
+            cout << "Enter value to insert: ";      // new value
+            cin >> val;                             // read it
+            insertBefore(key, val);                 // call function
+            break;                                  // done
+        case 5:   // display
+            display();                 // just print the list
+            break;                     // done
+        case 6:   // delete end
+            deleteEnd();               // remove last element
+            break;                     // done
+        case 7:   // delete start
+            deleteStart();             // remove first element
+            break;                     // done
+        case 8:   // delete specific
+            cout << "Enter value to delete: ";   // ask which one
+            cin >> val;                          // read it
+            deleteValue(val);                    // call function
+            break;                               // done
+        case 0:   // exit
+            cout << "Bye!" << endl;    // goodbye message
+            break;                     // leave switch
+        default:  // anything else
+            cout << "Invalid choice, try again" << endl;   // wrong number entered
+        }
+    } while (choice != 0);   // keep repeating until user types 0
+
+    return 0;   // program ended without problems
+}

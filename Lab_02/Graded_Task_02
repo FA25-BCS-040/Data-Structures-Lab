@@ -1,0 +1,127 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // skip typing std::
+
+struct Nodetype       // node of the list
+{
+    int data;         // value inside the node
+    Nodetype *next;   // address of next node
+};
+
+struct List           // i made a List struct because this task needs 3 lists and globals first/last wont be enough
+{
+    Nodetype *first;  // first node of this list
+    Nodetype *last;   // last node of this list
+};
+
+void init(List &l)    // sets a list to empty, & so the original list changes and not a copy
+{
+    l.first = NULL;   // no first node yet
+    l.last = NULL;    // no last node yet
+}
+
+void insert_end(List &l, int val)   // insert val at the end of list l
+{
+    Nodetype *p = new Nodetype;     // make a new node using new
+    p->data = val;                  // put the value in it
+    p->next = NULL;                 // it will be the last node so next is NULL
+    if (l.first == NULL)            // list empty check
+    {
+        l.first = l.last = p;       // new node is both first and last
+    }
+    else
+    {
+        l.last->next = p;           // link old last to new node
+        l.last = p;                 // update last pointer
+    }
+}
+
+void display(List &l)               // prints the list
+{
+    Nodetype *p = l.first;          // start at first node
+    if (p == NULL)                  // empty list
+    {
+        cout << "List is empty";    // tell user
+    }
+    while (p != NULL)               // go till the end
+    {
+        cout << p->data << " ";     // print the data
+        p = p->next;                // move ahead
+    }
+    cout << endl;                   // new line
+}
+
+void deleteAll(List &l)             // frees every node of a list
+{
+    Nodetype *p;                    // temp pointer
+    while (l.first != NULL)         // till list becomes empty
+    {
+        p = l.first;                // remember the first node
+        l.first = l.first->next;    // move first forward
+        delete p;                   // free the old first node
+    }
+    l.last = NULL;                  // list is empty now
+}
+
+// ---------- LAB TASK 2 starts from here ----------
+
+List mergeLists(List &a, List &b)   // merges a and b into a brand new third list and returns it
+{
+    List c;                         // the third list that will have everything
+    init(c);                        // make it empty first
+    Nodetype *p = a.first;          // pointer to walk the first list
+    while (p != NULL)               // copy all nodes of list a
+    {
+        insert_end(c, p->data);     // add a's value at the end of c (making a new node so a stays safe)
+        p = p->next;                // go to next node of a
+    }
+    p = b.first;                    // now same thing for list b, start from its first node
+    while (p != NULL)               // copy all nodes of list b
+    {
+        insert_end(c, p->data);     // add b's value after all the a values
+        p = p->next;                // next node of b
+    }
+    return c;                       // give back the merged list
+}
+
+void fillList(List &l, int num)     // helper to take input for a list, so main dosent get messy
+{
+    int val;                        // temp variable for each input
+    for (int i = 0; i < num; i++)   // loop num times
+    {
+        cout << "  Enter value " << i + 1 << ": ";   // ask for each value
+        cin >> val;                 // read it
+        insert_end(l, val);         // add it to the list
+    }
+}
+
+int main()   // main function
+{
+    List list1, list2, merged;      // 2 input lists and 1 result list
+    init(list1);                    // make list1 empty
+    init(list2);                    // make list2 empty
+    int n1, n2;                     // sizes of the two lists
+
+    cout << "How many elements in first list? ";   // ask size
+    cin >> n1;                      // read size
+    fillList(list1, n1);            // take the values
+
+    cout << "How many elements in second list? ";  // ask size of second one
+    cin >> n2;                      // read it
+    fillList(list2, n2);            // take the values
+
+    cout << "\nFirst list:  ";      // label
+    display(list1);                 // show list 1
+    cout << "Second list: ";        // label
+    display(list2);                 // show list 2
+
+    merged = mergeLists(list1, list2);   // call the merge function and store the new list
+
+    cout << "Merged list: ";        // label
+    display(merged);                // show the result
+
+    deleteAll(list1);               // free list1 memory
+    deleteAll(list2);               // free list2 memory
+    deleteAll(merged);              // free merged list memory
+
+    return 0;   // done
+}

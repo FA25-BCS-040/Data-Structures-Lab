@@ -1,0 +1,187 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // skip std::
+
+struct SNode          // node of the SINGLY linked list (only next pointer)
+{
+    int data;         // value
+    SNode *next;      // next node address
+};
+
+struct DNode          // node of the DOUBLY linked list (next and prev)
+{
+    int data;         // value
+    DNode *next;      // next node address
+    DNode *prev;      // previous node address
+};
+
+SNode *sfirst = NULL;   // first node of singly list, empty at start
+SNode *slast = NULL;    // last node of singly list
+DNode *dfirst = NULL;   // first node of doubly list, it will be filled by the conversion function
+DNode *dlast = NULL;    // last node of doubly list
+
+void insert_end_singly()   // takes a value from user and adds it at end of singly list
+{
+    SNode *p = new SNode;  // making new node
+    cout << "Enter the data in node: ";   // ask value
+    cin >> p->data;        // read it
+    p->next = NULL;        // last node so next is NULL
+    if (sfirst == NULL)    // empty check
+    {
+        sfirst = slast = p;   // both point to this node
+    }
+    else
+    {
+        slast->next = p;   // link old last to new node
+        slast = p;         // update last
+    }
+}
+
+void display_singly()      // prints the singly list
+{
+    SNode *p = sfirst;     // start from first
+    if (p == NULL)         // empty list
+    {
+        cout << "Singly list is empty" << endl;   // message
+        return;            // leave
+    }
+    while (p != NULL)      // till the end
+    {
+        cout << p->data << " ";   // print value
+        p = p->next;       // move ahead
+    }
+    cout << endl;          // new line
+}
+
+void display_doubly_forward()   // prints doubly list from first to last
+{
+    DNode *p = dfirst;     // start from first
+    if (p == NULL)         // empty list
+    {
+        cout << "Doubly list is empty" << endl;   // message
+        return;            // leave
+    }
+    while (p != NULL)      // till the end
+    {
+        cout << p->data << " ";   // print value
+        p = p->next;       // move forward
+    }
+    cout << endl;          // new line
+}
+
+void display_doubly_backward()  // prints doubly list from last to first, proves that the prev pointers work
+{
+    DNode *p = dlast;      // start from last
+    if (p == NULL)         // empty list
+    {
+        cout << "Doubly list is empty" << endl;   // message
+        return;            // leave
+    }
+    while (p != NULL)      // till the start
+    {
+        cout << p->data << " ";   // print value
+        p = p->prev;       // move backward
+    }
+    cout << endl;          // new line
+}
+
+// ---------- LAB TASK 3 starts from here ----------
+
+void convertToDoubly(SNode *head)   // takes the head of a singly list as parameter and builds a doubly list with same data
+{
+    SNode *s = head;       // pointer to walk the singly list, head is the parameter
+    DNode *p;              // pointer for each new doubly node
+
+    while (dfirst != NULL) // if the function is called twice, old doubly list is deleted first so there is no duplicate data
+    {
+        p = dfirst;        // save the first node
+        dfirst = dfirst->next;   // move first ahead
+        delete p;          // free it
+    }
+    dlast = NULL;          // doubly list is empty now
+
+    while (s != NULL)      // go through every node of the singly list
+    {
+        p = new DNode;     // make a new doubly node for this data
+        p->data = s->data; // copy the data from singly node
+        p->next = NULL;    // it is going to be the last node so next is NULL
+        p->prev = NULL;    // prev NULL for now
+        if (dfirst == NULL)   // is this the first node of doubly list
+        {
+            dfirst = dlast = p;   // first and last are same
+        }
+        else
+        {
+            dlast->next = p;   // old last node points forward to new node
+            p->prev = dlast;   // new node points back to old last
+            dlast = p;         // update last
+        }
+        s = s->next;       // go to the next singly node
+    }
+}
+
+void deleteAll()           // frees both lists at the end
+{
+    SNode *sp;             // temp pointer for singly
+    while (sfirst != NULL) // till singly list is empty
+    {
+        sp = sfirst;       // save first
+        sfirst = sfirst->next;   // move ahead
+        delete sp;         // free
+    }
+    slast = NULL;          // empty singly list
+
+    DNode *dp;             // temp pointer for doubly
+    while (dfirst != NULL) // till doubly list is empty
+    {
+        dp = dfirst;       // save first
+        dfirst = dfirst->next;   // move ahead
+        delete dp;         // free
+    }
+    dlast = NULL;          // empty doubly list
+}
+
+int main()   // main with menu
+{
+    int choice;   // menu choice
+
+    do   // menu shows atleast once
+    {
+        cout << "\n----- Singly to Doubly Menu -----" << endl;   // heading
+        cout << "1. Insert in singly list (at end)" << endl;     // option 1
+        cout << "2. Display singly list" << endl;                // option 2
+        cout << "3. Convert singly list to doubly list" << endl; // option 3 (the task)
+        cout << "4. Display doubly list forward" << endl;        // option 4
+        cout << "5. Display doubly list backward" << endl;       // option 5
+        cout << "0. Exit" << endl;                               // quit
+        cout << "Enter your choice: ";                           // ask
+        cin >> choice;                                           // read
+
+        switch (choice)   // switch for the menu
+        {
+        case 1:
+            insert_end_singly();    // insert in singly list
+            break;                  // stop
+        case 2:
+            display_singly();       // show singly list
+            break;                  // stop
+        case 3:
+            convertToDoubly(sfirst);   // passing the singly list's first node as the parameter
+            cout << "Converted to doubly linked list" << endl;   // confirm
+            break;                  // stop
+        case 4:
+            display_doubly_forward();  // forward print
+            break;                  // stop
+        case 5:
+            display_doubly_backward(); // backward print
+            break;                  // stop
+        case 0:
+            cout << "Bye!" << endl; // goodbye
+            break;                  // leave switch
+        default:
+            cout << "Invalid choice" << endl;   // wrong input
+        }
+    } while (choice != 0);   // repeat till 0
+
+    deleteAll();   // free all memory
+    return 0;      // done
+}

@@ -1,0 +1,166 @@
+#include <iostream>   // for cout and cin
+using namespace std;  // so i dont need to type std:: again and again
+
+struct Nodetype       // this is the node of the linked list, same name as in the manual
+{
+    int data;         // the value stored inside the node
+    Nodetype *next;   // pointer that holds address of the next node
+};
+
+Nodetype *first = NULL;   // points to the first node, NULL because list is empty at start
+Nodetype *last = NULL;    // points to the last node, also NULL in the begining
+
+void insert_end()         // inserts a new node at the end (activity 1 from the manual)
+{
+    Nodetype *p;          // temp pointer to hold the new node
+    p = new Nodetype;     // new gives us memory at runtime for the node
+    cout << "Enter the data in node: ";   // ask the user for value
+    cin >> p->data;       // store the value in the node's data
+    p->next = NULL;       // new node will be last so its next must be NULL, otherwise it has garbage
+    if (first == NULL)    // checking if list is empty
+    {
+        first = last = p; // only one node so first and last both point to it
+    }
+    else
+    {
+        last->next = p;   // old last node now links to the new one
+        last = p;         // last pointer moves to the new node
+    }
+}
+
+void insert_start()       // inserts a new node at the start (activity 2)
+{
+    Nodetype *p;          // temp pointer for new node
+    p = new Nodetype;     // allocate memory for it
+    cout << "Enter the data in node: ";   // ask for value
+    cin >> p->data;       // read value into node
+    p->next = NULL;       // set next to NULL first to be safe
+    if (first == NULL)    // empty list check
+    {
+        first = last = p; // first and last are the same node
+    }
+    else
+    {
+        p->next = first;  // new node points to the old first node
+        first = p;        // first now points to the new node
+    }
+}
+
+void display()            // normal display from first to last
+{
+    Nodetype *p = first;  // start from the first node
+    if (p == NULL)        // nothing in the list
+    {
+        cout << "Linked List is empty" << endl;   // tell the user
+        return;           // leave the function
+    }
+    while (p != NULL)     // keep going till we fall off the end
+    {
+        cout << p->data << " ";   // print current node value
+        p = p->next;      // move to next node
+    }
+    cout << endl;         // new line for neat output
+}
+
+// ---------- LAB TASK 1 starts from here ----------
+
+void displayReverseLoop()   // reverse display using loops only (no recursion)
+{
+    if (first == NULL)      // empty list check
+    {
+        cout << "Linked List is empty" << endl;   // message
+        return;             // nothing to print
+    }
+    int count = 0;          // will store how many nodes are there
+    Nodetype *p = first;    // pointer to walk the list
+    while (p != NULL)       // first loop just to count the nodes
+    {
+        count++;            // one more node found
+        p = p->next;        // go to next one
+    }
+    for (int i = count; i >= 1; i--)   // outer loop goes from last position to the first
+    {
+        p = first;          // each time we start again from the first node (singly list cant go backwards)
+        for (int j = 1; j < i; j++)    // inner loop moves p till the i-th node
+        {
+            p = p->next;    // step forward
+        }
+        cout << p->data << " ";   // print the node we reached
+    }
+    cout << endl;           // new line
+}
+
+void displayReverseRec(Nodetype *p)   // reverse display using recursion, p is current node
+{
+    if (p == NULL)          // base case, we reached the end so stop going deeper
+    {
+        return;             // come back
+    }
+    displayReverseRec(p->next);   // first go to the end of the list by calling for next node
+    cout << p->data << " ";       // print AFTER the call returns, thats why the order is reversed
+}
+
+void deleteAll()            // frees all the nodes at the end so no memory leak (activity 8)
+{
+    Nodetype *p;            // temp pointer
+    while (first != NULL)   // till list is empty
+    {
+        p = first;          // save the first node
+        first = first->next;   // move first ahead
+        delete p;           // free the saved node
+    }
+    last = NULL;            // list is empty so last also becomes NULL
+}
+
+int main()   // main with a menu
+{
+    int choice;   // stores the menu choice
+
+    do   // do while so menu shows atleast one time
+    {
+        cout << "\n----- Linked List Menu -----" << endl;   // heading
+        cout << "1. Insert at end" << endl;                 // option 1
+        cout << "2. Insert at start" << endl;               // option 2
+        cout << "3. Display list" << endl;                  // option 3
+        cout << "4. Display reverse (using loops)" << endl; // option 4
+        cout << "5. Display reverse (using recursion)" << endl;   // option 5
+        cout << "0. Exit" << endl;                          // option to quit
+        cout << "Enter your choice: ";                      // ask user
+        cin >> choice;                                      // read it
+
+        switch (choice)   // switch is easier to read than many ifs
+        {
+        case 1:
+            insert_end();   // call insert at end
+            break;          // break so it dosent run next case
+        case 2:
+            insert_start(); // call insert at start
+            break;          // stop
+        case 3:
+            display();      // normal display
+            break;          // stop
+        case 4:
+            displayReverseLoop();   // reverse with loops
+            break;          // stop
+        case 5:
+            if (first == NULL)      // check empty before recursion
+            {
+                cout << "Linked List is empty";   // message
+            }
+            else
+            {
+                displayReverseRec(first);   // pass first node to start the recursion
+            }
+            cout << endl;   // new line after output
+            break;          // stop
+        case 0:
+            cout << "Bye!" << endl;   // goodbye
+            break;          // leave switch
+        default:
+            cout << "Invalid choice" << endl;   // wrong input
+        }
+    } while (choice != 0);   // repeat until user enters 0
+
+    deleteAll();   // clean up memory before program ends
+    return 0;      // all good
+}

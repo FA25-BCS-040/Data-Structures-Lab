@@ -1,0 +1,383 @@
+// ============================================================================
+//  CSC211 - Data Structures | Assignment #1 (Lab) | Part B: Doubly Linked List
+//  No extra list/array/vector is used. Node addresses never change.
+// ============================================================================
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <typename T>
+struct DNode {
+    T      data;
+    DNode* prev;
+    DNode* next;
+    DNode(T d) : data(d), prev(nullptr), next(nullptr) {}
+};
+
+template <typename T>
+struct DList {                       // minimal wrapper: head + tail
+    DNode<T>* head = nullptr;
+    DNode<T>* tail = nullptr;
+    int size = 0;
+
+    void pushBack(T v) {
+        DNode<T>* n = new DNode<T>(v);
+        if (!tail) head = tail = n;
+        else { tail->next = n; n->prev = tail; tail = n; }
+        size++;
+    }
+    void print(const string& label) const {
+        cout << label;
+        for (DNode<T>* c = head; c; c = c->next) {
+            cout << c->data;
+            if (c->next) cout << " <-> ";
+        }
+        cout << endl;
+    }
+    void printBackward(const string& label) const {
+        cout << label;
+        for (DNode<T>* c = tail; c; c = c->prev) {
+            cout << c->data;
+            if (c->prev) cout << " <-> ";
+        }
+        cout << endl;
+    }
+    ~DList() {
+        while (head) { DNode<T>* t = head; head = head->next; delete t; }
+    }
+};
+
+// ----------------------------------------------------------------------------
+// Task 1: Swap 1st<->last, 2nd<->2nd-last ... (office desks)
+//   Two pointers walk towards each other; the occupants are exchanged.
+//   Nodes (desks) stay at the same addresses.
+// ----------------------------------------------------------------------------
+template <typename T>
+void swapFromEnds(DList<T>& list) {
+    DNode<T>* left  = list.head;
+    DNode<T>* right = list.tail;
+    while (left && right && left != right && left->prev != right) {
+        T tmp = left->data;
+        left->data = right->data;
+        right->data = tmp;
+        left  = left->next;
+        right = right->prev;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Task 2: Music player playlist (doubly linked list)
+// ----------------------------------------------------------------------------
+class Playlist {
+    struct Song {
+        string title, artist;
+        Song *prev, *next;
+        Song(string t, string a) : title(t), artist(a), prev(nullptr), next(nullptr) {}
+    };
+    Song* head;
+    Song* tail;
+    Song* current;
+    int   count;
+
+public:
+    Playlist() : head(nullptr), tail(nullptr), current(nullptr), count(0) {}
+    ~Playlist() {
+        while (head) { Song* t = head; head = head->next; delete t; }
+    }
+
+    void addSong(const string& title, const string& artist) {          // at end
+        Song* s = new Song(title, artist);
+        if (!tail) head = tail = current = s;
+        else { tail->next = s; s->prev = tail; tail = s; }
+        count++;
+        cout << "  [+] Added: " << title << " - " << artist << endl;
+    }
+    void addSongAtFront(const string& title, const string& artist) {
+        Song* s = new Song(title, artist);
+        if (!head) head = tail = current = s;
+        else { s->next = head; head->prev = s; head = s; }
+        count++;
+        cout << "  [+] Added at front: " << title << " - " << artist << endl;
+    }
+    bool removeSong(const string& title) {
+        for (Song* c = head; c; c = c->next) {
+            if (c->title == title) {
+                if (c->prev) c->prev->next = c->next; else head = c->next;
+                if (c->next) c->next->prev = c->prev; else tail = c->prev;
+                if (current == c) current = c->next ? c->next : c->prev;
+                delete c;
+                count--;
+                cout << "  [-] Removed: " << title << endl;
+                return true;
+            }
+        }
+        cout << "  [!] Song not found: " << title << endl;
+        return false;
+    }
+    void nowPlaying() const {
+        if (!current) { cout << "  Playlist is empty.\n"; return; }
+        cout << "  >> Now playing: " << current->title << " - " << current->artist << endl;
+    }
+    void playNext() {
+        if (!current) { cout << "  Playlist is empty.\n"; return; }
+        if (!current->next) { cout << "  End of playlist (no next song).\n"; return; }
+        current = current->next;
+        nowPlaying();
+    }
+    void playPrevious() {
+        if (!current) { cout << "  Playlist is empty.\n"; return; }
+        if (!current->prev) { cout << "  Start of playlist (no previous song).\n"; return; }
+        current = current->prev;
+        nowPlaying();
+    }
+    void playFirst() { current = head; nowPlaying(); }
+    void playLast()  { current = tail; nowPlaying(); }
+    void displayForward() const {
+        cout << "  Playlist (" << count << " songs) forward : ";
+        for (Song* c = head; c; c = c->next) {
+            cout << (c == current ? "[" : "") << c->title << (c == current ? "]" : "");
+            if (c->next) cout << " <-> ";
+        }
+        cout << endl;
+    }
+    void displayBackward() const {
+        cout << "  Playlist backward                : ";
+        for (Song* c = tail; c; c = c->prev) {
+            cout << (c == current ? "[" : "") << c->title << (c == current ? "]" : "");
+            if (c->prev) cout << " <-> ";
+        }
+        cout << endl;
+    }
+};
+
+// ----------------------------------------------------------------------------
+// Task 3: Inventory management  (Store -> Section -> Item, nested linked lists)
+//   Chosen structure: a linked list of stores; every store owns a linked list
+//   of sections; every section owns a linked list of items (with location).
+// ----------------------------------------------------------------------------
+struct Item {
+    string name;
+    int    quantity;
+    string location;                 // shelf / rack inside the section
+    Item*  next;
+    Item(string n, int q, string l) : name(n), quantity(q), location(l), next(nullptr) {}
+};
+struct Section {
+    string   name;
+    Item*    items;
+    Section* next;
+    Section(string n) : name(n), items(nullptr), next(nullptr) {}
+};
+struct Store {
+    string   name, city;
+    Section* sections;
+    Store*   next;
+    Store(string n, string c) : name(n), city(c), sections(nullptr), next(nullptr) {}
+};
+
+class Inventory {
+    Store* stores;
+
+    Store* findStore(const string& name) const {
+        for (Store* s = stores; s; s = s->next) if (s->name == name) return s;
+        return nullptr;
+    }
+    Section* findSection(Store* st, const string& name) const {
+        for (Section* c = st->sections; c; c = c->next) if (c->name == name) return c;
+        return nullptr;
+    }
+public:
+    Inventory() : stores(nullptr) {}
+    ~Inventory() {
+        while (stores) {
+            Store* s = stores; stores = stores->next;
+            while (s->sections) {
+                Section* c = s->sections; s->sections = c->next;
+                while (c->items) { Item* i = c->items; c->items = i->next; delete i; }
+                delete c;
+            }
+            delete s;
+        }
+    }
+
+    void addStore(const string& name, const string& city) {
+        if (findStore(name)) { cout << "  [!] Store already exists: " << name << endl; return; }
+        Store* s = new Store(name, city);
+        if (!stores) stores = s;
+        else { Store* t = stores; while (t->next) t = t->next; t->next = s; }
+        cout << "  [+] Store added: " << name << " (" << city << ")\n";
+    }
+
+    // 1) Add a new section in a store
+    void addSection(const string& store, const string& section) {
+        Store* st = findStore(store);
+        if (!st) { cout << "  [!] Store not found: " << store << endl; return; }
+        if (findSection(st, section)) { cout << "  [!] Section already exists: " << section << endl; return; }
+        Section* c = new Section(section);
+        if (!st->sections) st->sections = c;
+        else { Section* t = st->sections; while (t->next) t = t->next; t->next = c; }
+        cout << "  [+] Section '" << section << "' added to " << store << endl;
+    }
+
+    // 2) Store an item in a section of a store (same item+location => add quantity)
+    void storeItem(const string& store, const string& section,
+                   const string& item, int qty, const string& location) {
+        Store* st = findStore(store);
+        if (!st) { cout << "  [!] Store not found: " << store << endl; return; }
+        Section* sec = findSection(st, section);
+        if (!sec) { cout << "  [!] Section not found: " << section << endl; return; }
+        for (Item* i = sec->items; i; i = i->next)
+            if (i->name == item && i->location == location) {
+                i->quantity += qty;
+                cout << "  [~] Updated '" << item << "' quantity to " << i->quantity << endl;
+                return;
+            }
+        Item* n = new Item(item, qty, location);
+        if (!sec->items) sec->items = n;
+        else { Item* t = sec->items; while (t->next) t = t->next; t->next = n; }
+        cout << "  [+] Stored '" << item << "' x" << qty << " in " << store << "/" << section
+             << " @ " << location << endl;
+    }
+
+    // 3) Remove an item from a section of a store
+    void removeItem(const string& store, const string& section, const string& item) {
+        Store* st = findStore(store);
+        if (!st) { cout << "  [!] Store not found: " << store << endl; return; }
+        Section* sec = findSection(st, section);
+        if (!sec) { cout << "  [!] Section not found: " << section << endl; return; }
+        Item* prev = nullptr;
+        for (Item* i = sec->items; i; prev = i, i = i->next) {
+            if (i->name == item) {
+                if (prev) prev->next = i->next; else sec->items = i->next;
+                delete i;
+                cout << "  [-] Removed '" << item << "' from " << store << "/" << section << endl;
+                return;
+            }
+        }
+        cout << "  [!] Item not found: " << item << endl;
+    }
+
+    // 4) Display all items of a section of a store
+    void displaySection(const string& store, const string& section) const {
+        Store* st = findStore(store);
+        if (!st) { cout << "  [!] Store not found: " << store << endl; return; }
+        Section* sec = findSection(st, section);
+        if (!sec) { cout << "  [!] Section not found: " << section << endl; return; }
+        cout << "  Items in " << store << " / " << section << ":\n";
+        if (!sec->items) cout << "    (no items)\n";
+        for (Item* i = sec->items; i; i = i->next)
+            cout << "    - " << i->name << "  qty: " << i->quantity << "  location: " << i->location << endl;
+    }
+
+    // 5) Display all items of a store
+    void displayStore(const string& store) const {
+        Store* st = findStore(store);
+        if (!st) { cout << "  [!] Store not found: " << store << endl; return; }
+        cout << "  Store: " << st->name << " (" << st->city << ")\n";
+        if (!st->sections) cout << "    (no sections)\n";
+        for (Section* c = st->sections; c; c = c->next) {
+            cout << "    Section: " << c->name << endl;
+            if (!c->items) cout << "      (no items)\n";
+            for (Item* i = c->items; i; i = i->next)
+                cout << "      - " << i->name << "  qty: " << i->quantity
+                     << "  location: " << i->location << endl;
+        }
+    }
+};
+
+// ----------------------------------------------------------------------------
+// Task 4: Theater seats - swap alternate seats from both ends, ends fixed
+//   1 2 3 4 5 6 7 8 9  ->  1 8 3 6 5 4 7 2 9
+//   Seats at positions 2,4,6.. are exchanged with their mirror positions
+//   (n+1-i); first and last seats and the odd-position seats stay.
+// ----------------------------------------------------------------------------
+template <typename T>
+void swapAlternateSeats(DList<T>& list) {
+    int n = list.size;
+    if (n < 4) return;
+    DNode<T>* left  = list.head->next;       // position 2
+    DNode<T>* right = list.tail->prev;       // position n-1
+    int l = 2, r = n - 1;
+    while (l < r) {
+        T tmp = left->data;
+        left->data = right->data;
+        right->data = tmp;
+        l += 2; r -= 2;
+        if (l >= r) break;                   // do not walk pointers past the centre
+        left  = left->next->next;
+        right = right->prev->prev;
+    }
+}
+
+// ================================== MAIN ====================================
+int main() {
+    cout << "=========== DOUBLY LINKED LIST TASKS ===========\n\n";
+
+    // ---- Task 1 ----
+    cout << "[Task 1] Office desks - swap from both ends\n";
+    DList<string> desks;
+    const char* d[] = {"Alice", "Bob", "Charlie", "Dana", "Eva", "Frank"};
+    for (int i = 0; i < 6; i++) desks.pushBack(d[i]);
+    desks.print("Before : ");
+    swapFromEnds(desks);
+    desks.print("After  : ");
+    desks.printBackward("Backward check: ");
+
+    // ---- Task 2 ----
+    cout << "\n[Task 2] Music player playlist\n";
+    Playlist pl;
+    pl.addSong("Tum Hi Ho", "Arijit Singh");
+    pl.addSong("Dil Dil Pakistan", "Vital Signs");
+    pl.addSong("Pasoori", "Ali Sethi");
+    pl.addSongAtFront("Intro Theme", "Studio");
+    pl.displayForward();
+    pl.displayBackward();
+    pl.nowPlaying();
+    pl.playNext();
+    pl.playNext();
+    pl.playPrevious();
+    pl.playLast();
+    pl.playNext();                      // boundary check
+    pl.removeSong("Pasoori");           // removing the currently playing song
+    pl.nowPlaying();
+    pl.removeSong("Unknown Song");
+    pl.displayForward();
+    pl.displayBackward();
+
+    // ---- Task 3 ----
+    cout << "\n[Task 3] Retail chain inventory\n";
+    Inventory inv;
+    inv.addStore("MegaMart-Isb", "Islamabad");
+    inv.addStore("MegaMart-Lhr", "Lahore");
+    inv.addSection("MegaMart-Isb", "Toys");
+    inv.addSection("MegaMart-Isb", "Grocery");
+    inv.addSection("MegaMart-Isb", "Fruits");
+    inv.addSection("MegaMart-Lhr", "Fruits");
+    inv.storeItem("MegaMart-Isb", "Toys",    "Lego Set",  15, "Aisle 1, Rack B");
+    inv.storeItem("MegaMart-Isb", "Toys",    "Teddy Bear", 8, "Aisle 1, Rack C");
+    inv.storeItem("MegaMart-Isb", "Grocery", "Rice 5kg",  40, "Aisle 4, Rack A");
+    inv.storeItem("MegaMart-Isb", "Fruits",  "Apples",    60, "Aisle 7, Bin 2");
+    inv.storeItem("MegaMart-Isb", "Fruits",  "Apples",    20, "Aisle 7, Bin 2");   // quantity merge
+    inv.storeItem("MegaMart-Lhr", "Fruits",  "Mangoes",   35, "Aisle 2, Bin 1");
+    inv.storeItem("MegaMart-Lhr", "Toys",    "Puzzle",     5, "Aisle 1");          // section missing
+    cout << "\n";
+    inv.displaySection("MegaMart-Isb", "Toys");
+    inv.displayStore("MegaMart-Isb");
+    cout << "\n";
+    inv.removeItem("MegaMart-Isb", "Toys", "Teddy Bear");
+    inv.removeItem("MegaMart-Isb", "Toys", "Drone");                               // not present
+    inv.displaySection("MegaMart-Isb", "Toys");
+    inv.displayStore("MegaMart-Lhr");
+
+    // ---- Task 4 ----
+    cout << "\n[Task 4] Theater seats - alternate swap, ends fixed\n";
+    for (int n = 9; n <= 10; n++) {
+        DList<int> seats;
+        for (int i = 1; i <= n; i++) seats.pushBack(i);
+        seats.print("Input  : ");
+        swapAlternateSeats(seats);
+        seats.print("Output : ");
+        seats.printBackward("Backward: ");
+    }
+    return 0;
+}

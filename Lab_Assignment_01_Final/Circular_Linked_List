@@ -1,0 +1,237 @@
+// ============================================================================
+//  CSC211 - Data Structures | Assignment #1 (Lab) | Part C: Circular Linked List
+//  Task 1: Josephus problem          Task 2: Round-robin task scheduler
+// ============================================================================
+#include <iostream>                                   // for cout and endl
+#include <string>                                     // for the string type
+using namespace std;                                  // so we can skip the std:: prefix
+
+// ----------------------------------------------------------------------------
+// Task 1: Josephus problem using a circular singly linked list
+//   N persons stand in a circle numbered 1..N. Starting from person 1,
+//   M-1 persons are skipped and the M-th person is eliminated. Counting then
+//   continues from the next person. The last person left is the survivor.
+// ----------------------------------------------------------------------------
+struct PersonNode {                                   // one person in the circle
+    int         id;                                   // the person's number
+    PersonNode* next;                                 // the next person (last one points back to first)
+    PersonNode(int i) : id(i), next(nullptr) {}
+};
+
+int josephus(int N, int M, bool verbose = true) {
+    if (N < 1 || M < 1) {                             // invalid input check
+        cout << "N and M must both be >= 1\n";
+        return -1;
+    }
+    // build the circle 1 -> 2 -> ... -> N -> back to 1
+    PersonNode* head = new PersonNode(1);             // first person
+    PersonNode* tail = head;                          // tail tracks the last person added
+    for (int i = 2; i <= N; i++) {                    // add persons 2..N
+        tail->next = new PersonNode(i);               // attach the new person after the tail
+        tail = tail->next;                            // the new person is now the tail
+    }
+    tail->next = head;                                // close the circle
+
+    PersonNode* prev = tail;                          // node just before the counting start (person 1)
+    if (verbose) cout << "  Elimination order: ";
+    while (prev->next != prev) {                      // while more than one person is left
+        for (int i = 1; i < M; i++)                   // skip M-1 persons
+            prev = prev->next;
+        PersonNode* victim = prev->next;              // this is the M-th person
+        if (verbose) cout << victim->id << " ";       // print who is eliminated
+        prev->next = victim->next;                    // unlink the victim from the circle
+        delete victim;                                // free its memory
+    }
+    int survivor = prev->id;                          // the only node left points to itself
+    if (verbose) cout << "\n";
+    delete prev;                                      // free the last node
+    return survivor;                                  // this is the safe position
+}
+
+// ----------------------------------------------------------------------------
+// Task 2: Round-robin task scheduler using a circular linked list
+// ----------------------------------------------------------------------------
+enum Status { PENDING, IN_PROGRESS, COMPLETED };      // the three allowed task statuses
+
+string statusToString(Status s) {                     // converts a status to readable text
+    switch (s) {
+        case PENDING:     return "Pending";
+        case IN_PROGRESS: return "In-Progress";
+        default:          return "Completed";
+    }
+}
+
+struct Task {                                         // one task node
+    string name;                                      // task name (used to find/remove/update it)
+    int    priority;                                  // priority number
+    Status status;                                    // pending / in-progress / completed
+    Task*  next;                                      // next task in the circle
+    Task(string n, int p, Status s = PENDING) : name(n), priority(p), status(s), next(nullptr) {}
+};
+
+class TaskScheduler {
+    Task* tail;        // we store the TAIL; tail->next is the head, so adding at the end is easy
+    Task* current;     // the task most recently handed out (round-robin position)
+
+    Task* find(const string& name) const {            // search a task by name
+        if (!tail) return nullptr;                    // empty list
+        Task* c = tail->next;                         // start at the head
+        do {
+            if (c->name == name) return c;            // found it
+            c = c->next;                              // go to the next task
+        } while (c != tail->next);                    // stop after one full round
+        return nullptr;                               // not found
+    }
+
+public:
+    TaskScheduler() : tail(nullptr), current(nullptr) {}   // starts empty
+    ~TaskScheduler() { clear(); }                     // free memory automatically at the end
+    void clear();                                     // defined below the class
+
+    // ---- Add a Task (at the end, list stays circular) ----
+    void addTask(const string& name, int priority, Status status = PENDING) {
+        if (find(name)) { cout << "  [!] Task already exists: " << name << endl; return; }
+        Task* t = new Task(name, priority, status);   // create the new task
+        if (!tail) {                                  // first task in the list
+            t->next = t;                              // it points to itself to stay circular
+            tail = t;                                 // it is the tail (and head)
+            current = t;                              // round-robin starts here
+        } else {
+            t->next = tail->next;                     // new task points to the head
+            tail->next = t;                           // old tail points to the new task
+            tail = t;                                 // new task becomes the tail
+        }
+        cout << "  [+] Task added: " << name << " (priority " << priority << ", "
+             << statusToString(status) << ")\n";
+    }
+
+    // ---- Remove a Task by name ----
+    bool removeTask(const string& name) {
+        if (!tail) { cout << "  [!] No tasks to remove.\n"; return false; }
+        Task* prev = tail;                            // prev is always the node before cur
+        Task* cur  = tail->next;                      // start at the head
+        do {
+            if (cur->name == name) {                  // found the task to remove
+                if (cur == cur->next) {               // it is the only task in the list
+                    tail = nullptr;                   // list becomes empty
+                    current = nullptr;
+                } else {
+                    prev->next = cur->next;           // skip over the removed task
+                    if (cur == tail) tail = prev;     // if we removed the tail, update the tail
+                    if (cur == current) current = prev;   // keep the round-robin pointer valid
+                }
+                cout << "  [-] Task removed: " << name << endl;
+                delete cur;                           // free the memory
+                return true;
+            }
+            prev = cur;                               // move both pointers one step
+            cur  = cur->next;
+        } while (prev != tail);                       // stop after checking every task once
+        cout << "  [!] Task not found: " << name << endl;
+        return false;
+    }
+
+    // ---- Get next task (round-robin, skipping tasks that are not pending) ----
+    Task* getNextTask() {
+        if (!tail) { cout << "  [!] Scheduler is empty.\n"; return nullptr; }
+        Task* c = current->next;                      // begin with the task after the current one
+        do {
+            if (c->status == PENDING) {               // only pending tasks can be executed
+                current = c;                          // remember it for the next call
+                cout << "  >> Next task to execute: " << c->name << " (priority "
+                     << c->priority << ")\n";
+                return c;
+            }
+            c = c->next;                              // otherwise skip to the next task
+        } while (c != current->next);                 // stop after one full round
+        cout << "  >> No pending tasks left.\n";
+        return nullptr;
+    }
+
+    // ---- Display all tasks starting from the head ----
+    void displayAll() const {
+        if (!tail) { cout << "  (no tasks)\n"; return; }
+        cout << "  ---------------------------------------------\n";
+        cout << "  Task Name            Priority   Status\n";
+        cout << "  ---------------------------------------------\n";
+        Task* c = tail->next;                         // start from the head
+        do {
+            string n = c->name;
+            while (n.size() < 20) n += ' ';           // pad the name so columns line up
+            cout << "  " << n << " " << c->priority << "          " << statusToString(c->status) << endl;
+            c = c->next;                              // next task
+        } while (c != tail->next);                    // stop when we are back at the head
+        cout << "  ---------------------------------------------\n";
+    }
+
+    // ---- Update the status of a task by name and show it ----
+    bool updateStatus(const string& name, Status s) {
+        Task* t = find(name);                         // look for the task
+        if (!t) { cout << "  [!] Task not found: " << name << endl; return false; }
+        t->status = s;                                // change its status
+        cout << "  [~] '" << name << "' status updated to " << statusToString(s) << endl;
+        return true;
+    }
+};
+
+void TaskScheduler::clear() {                         // deletes all tasks
+    if (!tail) return;                                // already empty
+    Task* head = tail->next;                          // find the head
+    tail->next = nullptr;                             // break the circle so the loop can end
+    while (head) {                                    // delete one by one
+        Task* t = head;
+        head = head->next;
+        delete t;
+    }
+    tail = current = nullptr;                         // reset pointers
+}
+
+// ================================== MAIN ====================================
+int main() {
+    cout << "=========== CIRCULAR LINKED LIST TASKS ===========\n\n";
+
+    cout << "[Task 1] Josephus problem\n";
+    int tests[][2] = {{7, 3}, {5, 2}, {10, 4}, {1, 5}, {41, 3}};   // pairs of {N, M}
+    for (int i = 0; i < 5; i++) {
+        cout << " N = " << tests[i][0] << ", M = " << tests[i][1] << endl;
+        int s = josephus(tests[i][0], tests[i][1]);   // solve it
+        cout << "  Safe position (survivor): " << s << endl;
+    }
+
+    cout << "\n[Task 2] Round-robin task scheduler\n";
+    TaskScheduler sch;                                // empty scheduler
+    sch.addTask("Design DB schema", 1);               // add some tasks
+    sch.addTask("Write API", 2);
+    sch.addTask("Unit testing", 3, COMPLETED);        // already completed, should be skipped
+    sch.addTask("Deploy build", 2);
+    sch.addTask("Write API", 5);                      // duplicate name: should be rejected
+    cout << "\nAll tasks:\n";
+    sch.displayAll();
+
+    cout << "\nGet next task (round-robin):\n";
+    sch.getNextTask();
+    sch.getNextTask();
+    sch.getNextTask();                                // skips the completed task and wraps around
+
+    cout << "\nUpdate status:\n";
+    sch.updateStatus("Design DB schema", COMPLETED);  // mark one as completed
+    sch.updateStatus("Write API", IN_PROGRESS);       // mark one as in progress
+    sch.updateStatus("Missing task", PENDING);        // error test: name doesn't exist
+    sch.displayAll();
+
+    cout << "\nGet next task after updates:\n";
+    sch.getNextTask();                                // only "Deploy build" is pending now
+    sch.getNextTask();
+
+    cout << "\nRemove tasks:\n";
+    sch.removeTask("Design DB schema");               // removing the head
+    sch.removeTask("Deploy build");                   // removing the tail
+    sch.removeTask("Nothing");                        // error test: name doesn't exist
+    sch.displayAll();
+    sch.removeTask("Write API");
+    sch.removeTask("Unit testing");                   // removing the last remaining node
+    sch.displayAll();
+    sch.getNextTask();                                // scheduler is empty now
+    sch.clear();                                      // safe even when already empty
+    return 0;                                         // program finished successfully
+}

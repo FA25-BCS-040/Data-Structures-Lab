@@ -1,0 +1,377 @@
+// ============================================================================
+//  CSC211 - Data Structures | Assignment #1 (Lab) | Part A: Singly Linked List
+//  Only pointers are re-linked: no extra list / array / vector, no new nodes
+//  are created by the algorithms, and every node keeps its original address.
+// ============================================================================
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <typename T>
+struct Node {
+    T     data;
+    Node* next;
+    Node(T d) : data(d), next(nullptr) {}
+};
+
+// ----------------------------- helper utilities ----------------------------
+template <typename T>
+Node<T>* pushBack(Node<T>*& head, T value) {          // used only to build test data
+    Node<T>* n = new Node<T>(value);
+    if (!head) { head = n; return n; }
+    Node<T>* t = head;
+    while (t->next) t = t->next;
+    t->next = n;
+    return n;
+}
+
+template <typename T>
+void printList(const string& label, Node<T>* head) {
+    cout << label;
+    if (!head) cout << "(empty)";
+    for (Node<T>* c = head; c; c = c->next) {
+        cout << c->data;
+        if (c->next) cout << " -> ";
+    }
+    cout << endl;
+}
+
+template <typename T>
+void freeList(Node<T>*& head) {
+    while (head) { Node<T>* t = head; head = head->next; delete t; }
+}
+
+template <typename T>
+int countNodes(Node<T>* head) {
+    int n = 0;
+    for (; head; head = head->next) n++;
+    return n;
+}
+
+// ----------------------------------------------------------------------------
+// Task 1: Display list in reverse order WITHOUT modifying it (recursion)
+// ----------------------------------------------------------------------------
+template <typename T>
+void printReverseRec(Node<T>* node) {
+    if (!node) return;
+    printReverseRec(node->next);          // go to the end first
+    cout << node->data << " ";            // print while unwinding
+}
+template <typename T>
+void displayReverse(Node<T>* head) {
+    printReverseRec(head);
+    cout << endl;
+}
+
+// ----------------------------------------------------------------------------
+// Task 2: Reverse the list itself by changing links only (3-pointer method)
+// ----------------------------------------------------------------------------
+template <typename T>
+Node<T>* reverseList(Node<T>* head) {
+    Node<T>* prev = nullptr;
+    Node<T>* curr = head;
+    while (curr) {
+        Node<T>* nxt = curr->next;        // remember rest of list
+        curr->next = prev;                // flip the link
+        prev = curr;
+        curr = nxt;
+    }
+    return prev;                          // old tail = new head
+}
+
+// ----------------------------------------------------------------------------
+// Task 3 & 8: Remove duplicates from an UNSORTED list (keep first occurrence).
+//   For each node, a runner scans the remainder and unlinks equal nodes.
+//   No hash set / extra container is used  ->  O(n^2) time, O(1) space.
+// ----------------------------------------------------------------------------
+template <typename T>
+void removeDuplicates(Node<T>* head) {
+    for (Node<T>* cur = head; cur; cur = cur->next) {
+        Node<T>* runner = cur;
+        while (runner->next) {
+            if (runner->next->data == cur->data) {
+                Node<T>* dup = runner->next;
+                runner->next = dup->next;
+                delete dup;
+            } else {
+                runner = runner->next;
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Task 4: Detect a loop (Floyd's tortoise & hare)
+// ----------------------------------------------------------------------------
+template <typename T>
+bool hasLoop(Node<T>* head) {
+    Node<T>* slow = head;
+    Node<T>* fast = head;
+    while (fast && fast->next) {
+        slow = slow->next;                // 1 step
+        fast = fast->next->next;          // 2 steps
+        if (slow == fast) return true;    // they can only meet inside a cycle
+    }
+    return false;                         // fast reached NULL -> no cycle
+}
+
+// ----------------------------------------------------------------------------
+// Task 5: Middle node (for an even count return the LEFT of the two middles)
+// ----------------------------------------------------------------------------
+template <typename T>
+Node<T>* findMiddle(Node<T>* head) {
+    if (!head) return nullptr;
+    Node<T>* slow = head;
+    Node<T>* fast = head;
+    while (fast->next && fast->next->next) {   // stops one step early for even n
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    return slow;
+}
+
+// ----------------------------------------------------------------------------
+// Task 6: Split into an EVEN-valued list and an ODD-valued list.
+//   Existing nodes are re-linked (relative order preserved).
+// ----------------------------------------------------------------------------
+void splitEvenOdd(Node<int>* head, Node<int>*& evenHead, Node<int>*& oddHead) {
+    evenHead = oddHead = nullptr;
+    Node<int>* evenTail = nullptr;
+    Node<int>* oddTail  = nullptr;
+    while (head) {
+        Node<int>* nxt = head->next;
+        head->next = nullptr;
+        if (head->data % 2 == 0) {
+            if (!evenHead) evenHead = head; else evenTail->next = head;
+            evenTail = head;
+        } else {
+            if (!oddHead) oddHead = head; else oddTail->next = head;
+            oddTail = head;
+        }
+        head = nxt;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Task 7: Reverse the first half and the second half separately.
+//   1..8  ->  4 3 2 1 8 7 6 5.   (n odd: first half = n/2 nodes, rest = second)
+// ----------------------------------------------------------------------------
+// reverses the first k nodes; 'rest' receives the node after them
+template <typename T>
+Node<T>* reverseFirstK(Node<T>* head, int k, Node<T>*& rest) {
+    Node<T>* prev = nullptr;
+    Node<T>* curr = head;
+    while (k-- > 0 && curr) {
+        Node<T>* nxt = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = nxt;
+    }
+    rest = curr;
+    return prev;
+}
+template <typename T>
+Node<T>* reverseHalves(Node<T>* head) {
+    int n = countNodes(head);
+    if (n < 2) return head;
+    int half = n / 2;
+
+    Node<T>* secondStart = nullptr;
+    Node<T>* firstRev  = reverseFirstK(head, half, secondStart);   // old head is now tail of 1st half
+    Node<T>* dummy     = nullptr;
+    Node<T>* secondRev = reverseFirstK(secondStart, n - half, dummy);
+
+    head->next = secondRev;               // 'head' (old first node) is the tail of the first half
+    return firstRev;
+}
+
+// ----------------------------------------------------------------------------
+// Task 9: Delete ALL occurrences of a key (head / middle / tail / repeated)
+// ----------------------------------------------------------------------------
+template <typename T>
+Node<T>* deleteAllOccurrences(Node<T>* head, T key) {
+    while (head && head->data == key) {            // leading matches
+        Node<T>* t = head;
+        head = head->next;
+        delete t;
+    }
+    Node<T>* cur = head;
+    while (cur && cur->next) {                     // middle / end matches
+        if (cur->next->data == key) {
+            Node<T>* t = cur->next;
+            cur->next = t->next;
+            delete t;
+        } else {
+            cur = cur->next;
+        }
+    }
+    return head;
+}
+
+// ----------------------------------------------------------------------------
+// Task 10: Swap every two consecutive nodes by re-linking (1 2 3 4 -> 2 1 4 3)
+// ----------------------------------------------------------------------------
+template <typename T>
+Node<T>* swapPairs(Node<T>* head) {
+    if (!head || !head->next) return head;
+    Node<T>* newHead = head->next;
+    Node<T>* prevTail = nullptr;
+    Node<T>* curr = head;
+    while (curr && curr->next) {
+        Node<T>* second = curr->next;
+        Node<T>* nextPair = second->next;
+        second->next = curr;                       // swap the pair
+        curr->next = nextPair;
+        if (prevTail) prevTail->next = second;     // connect with previous pair
+        prevTail = curr;
+        curr = nextPair;
+    }
+    return newHead;
+}
+
+// ================================== MAIN ====================================
+int main() {
+    cout << "=========== SINGLY LINKED LIST TASKS ===========\n\n";
+
+    // ---- Task 1 ----
+    cout << "[Task 1] Logging system - display in reverse (list unchanged)\n";
+    Node<string>* logs = nullptr;
+    pushBack<string>(logs, "10:00 System started");
+    pushBack<string>(logs, "10:05 User login");
+    pushBack<string>(logs, "10:09 File uploaded");
+    pushBack<string>(logs, "10:15 Error 404");
+    printList("Original : ", logs);
+    cout << "Reverse  : ";  displayReverse(logs);
+    printList("After     : ", logs);
+    freeList(logs);
+
+    // ---- Task 2 ----
+    cout << "\n[Task 2] Reverse playlist (links only, same addresses)\n";
+    Node<string>* pl = nullptr;
+    Node<string>* s1 = pushBack<string>(pl, "Song A");
+    Node<string>* s2 = pushBack<string>(pl, "Song B");
+    Node<string>* s3 = pushBack<string>(pl, "Song C");
+    Node<string>* s4 = pushBack<string>(pl, "Song D");
+    printList("Before : ", pl);
+    cout << "Addresses before: " << s1 << " " << s2 << " " << s3 << " " << s4 << endl;
+    pl = reverseList(pl);
+    printList("After  : ", pl);
+    cout << "Addresses after : ";
+    for (Node<string>* c = pl; c; c = c->next) cout << c << " ";
+    cout << "(same set, reversed order)\n";
+    freeList(pl);
+
+    // ---- Task 3 ----
+    cout << "\n[Task 3] Contact list - remove duplicate contacts\n";
+    Node<string>* contacts = nullptr;
+    const char* names[] = {"Ali", "Sara", "Ali", "Usman", "Sara", "Ayesha", "Usman", "Ali"};
+    for (int i = 0; i < 8; i++) pushBack<string>(contacts, names[i]);
+    printList("Before : ", contacts);
+    removeDuplicates(contacts);
+    printList("After  : ", contacts);
+    freeList(contacts);
+
+    // ---- Task 4 ----
+    cout << "\n[Task 4] IoT buffer - detect loop\n";
+    Node<int>* buf = nullptr;
+    Node<int>* tail = nullptr;
+    Node<int>* third = nullptr;
+    for (int i = 1; i <= 6; i++) {
+        tail = pushBack(buf, i * 10);
+        if (i == 3) third = tail;
+    }
+    printList("Buffer (no cycle): ", buf);
+    cout << "Loop present? " << (hasLoop(buf) ? "YES" : "NO") << endl;
+    tail->next = third;                                  // faulty pointer update
+    cout << "Tail (60) now points back to node 30...\n";
+    cout << "Loop present? " << (hasLoop(buf) ? "YES" : "NO") << endl;
+    tail->next = nullptr;                                // repair before cleanup
+    freeList(buf);
+
+    // ---- Task 5 ----
+    cout << "\n[Task 5] Middle friend (left-middle for even count)\n";
+    for (int n = 5; n <= 6; n++) {
+        Node<string>* fr = nullptr;
+        const char* f[] = {"Ahmed", "Bilal", "Chand", "Danish", "Emaan", "Farah"};
+        for (int i = 0; i < n; i++) pushBack<string>(fr, f[i]);
+        printList("Line : ", fr);
+        cout << "Middle: " << findMiddle(fr)->data << endl;
+        freeList(fr);
+    }
+
+    // ---- Task 6 ----
+    cout << "\n[Task 6] Grocery carts - even / odd priced lines\n";
+    Node<int>* prices = nullptr;
+    int pr[] = {12, 7, 30, 15, 8, 21, 44, 9};
+    for (int i = 0; i < 8; i++) pushBack(prices, pr[i]);
+    printList("All     : ", prices);
+    Node<int>* evenL; Node<int>* oddL;
+    splitEvenOdd(prices, evenL, oddL);
+    printList("Even line: ", evenL);
+    printList("Odd line : ", oddL);
+    freeList(evenL); freeList(oddL);
+
+    // ---- Task 7 ----
+    cout << "\n[Task 7] Warehouse boxes - reverse each half separately\n";
+    Node<int>* boxes = nullptr;
+    for (int i = 1; i <= 8; i++) pushBack(boxes, i);
+    printList("Before : ", boxes);
+    boxes = reverseHalves(boxes);
+    printList("After  : ", boxes);
+    freeList(boxes);
+
+    // ---- Task 8 ----
+    cout << "\n[Task 8] Stamp collection - keep one of each design\n";
+    Node<int>* stamps = nullptr;
+    int st[] = {101, 205, 101, 307, 205, 412, 307, 101};
+    for (int i = 0; i < 8; i++) pushBack(stamps, st[i]);
+    printList("Before : ", stamps);
+    removeDuplicates(stamps);
+    printList("After  : ", stamps);
+    freeList(stamps);
+
+    // ---- Task 9 ----
+    cout << "\n[Task 9] Library - delete all copies of a book id\n";
+    {
+        Node<int>* a = nullptr;                          // key at beginning & repeated
+        int v1[] = {5, 5, 1, 2, 5, 3};
+        for (int i = 0; i < 6; i++) pushBack(a, v1[i]);
+        printList("Catalog (key 5): ", a);
+        a = deleteAllOccurrences(a, 5);
+        printList("After          : ", a);
+        freeList(a);
+
+        Node<int>* b = nullptr;                          // key in middle & at end
+        int v2[] = {1, 4, 2, 4, 3, 4};
+        for (int i = 0; i < 6; i++) pushBack(b, v2[i]);
+        printList("Catalog (key 4): ", b);
+        b = deleteAllOccurrences(b, 4);
+        printList("After          : ", b);
+        freeList(b);
+
+        Node<int>* c = nullptr;                          // every node matches
+        for (int i = 0; i < 3; i++) pushBack(c, 8);
+        printList("Catalog (key 8): ", c);
+        c = deleteAllOccurrences(c, 8);
+        printList("After          : ", c);
+
+        Node<int>* d = nullptr;                          // key absent
+        for (int i = 1; i <= 3; i++) pushBack(d, i);
+        printList("Catalog (key 9): ", d);
+        d = deleteAllOccurrences(d, 9);
+        printList("After          : ", d);
+        freeList(d);
+    }
+
+    // ---- Task 10 ----
+    cout << "\n[Task 10] Swap tasks in pairs\n";
+    for (int n = 6; n <= 7; n++) {
+        Node<int>* tasks = nullptr;
+        for (int i = 1; i <= n; i++) pushBack(tasks, i);
+        printList("Input  : ", tasks);
+        tasks = swapPairs(tasks);
+        printList("Output : ", tasks);
+        freeList(tasks);
+    }
+    return 0;
+}

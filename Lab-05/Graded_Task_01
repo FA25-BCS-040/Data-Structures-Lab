@@ -1,0 +1,107 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+struct Node {
+    char data;
+    Node* next;
+    Node(char c) {
+        data = c;
+        next = NULL;
+    }
+};
+
+struct Stack {
+    Node* topNode;
+    Stack() {
+        topNode = NULL;
+    }
+    bool isEmpty() {
+        return topNode == NULL;
+    }
+    void push(char c) {
+        Node* n = new Node(c);
+        n->next = topNode;
+        topNode = n;
+    }
+    void pop() {
+        if (isEmpty())
+            return;
+        Node* temp = topNode;
+        topNode = topNode->next;
+        delete temp;
+    }
+    char top() {
+        return topNode->data;
+    }
+    ~Stack() {
+        while (!isEmpty())
+            pop();
+    }
+};
+
+int priority(char c) {
+    if (c == '[')
+        return 3;
+    if (c == '{')
+        return 2;
+    if (c == '(')
+        return 1;
+    return 0;
+}
+
+bool isOpening(char c) {
+    return c == '(' || c == '{' || c == '[';
+}
+
+bool isClosing(char c) {
+    return c == ')' || c == '}' || c == ']';
+}
+
+bool matches(char open, char close) {
+    return (open == '(' && close == ')') ||
+           (open == '{' && close == '}') ||
+           (open == '[' && close == ']');
+}
+
+int checkBrackets(string expr) {
+    Stack s;
+    for (int i = 0; i < (int)expr.length(); i++) {
+        char c = expr[i];
+        if (isOpening(c)) {
+            if (!s.isEmpty() && priority(c) > priority(s.top()))
+                return 2;
+            s.push(c);
+        } else if (isClosing(c)) {
+            if (s.isEmpty())
+                return 1;
+            char open = s.top();
+            s.pop();
+            if (!matches(open, c))
+                return 1;
+        }
+    }
+    if (!s.isEmpty())
+        return 1;
+    return 0;
+}
+
+int main() {
+    int n;
+    cout << "How many strings do you want to test? ";
+    cin >> n;
+    cin.ignore(1000, '\n');
+    for (int i = 1; i <= n; i++) {
+        string expr;
+        cout << "Enter string " << i << ": ";
+        getline(cin, expr);
+        int result = checkBrackets(expr);
+        if (result == 0)
+            cout << "   Balanced" << endl;
+        else if (result == 1)
+            cout << "   Not Balanced (brackets do not match)" << endl;
+        else
+            cout << "   Not Balanced (priority of brackets not maintained)" << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,110 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+struct Node {
+    double data;
+    Node* next;
+    Node(double v) {
+        data = v;
+        next = NULL;
+    }
+};
+
+struct Stack {
+    Node* topNode;
+    Stack() {
+        topNode = NULL;
+    }
+    bool isEmpty() {
+        return topNode == NULL;
+    }
+    void push(double v) {
+        Node* n = new Node(v);
+        n->next = topNode;
+        topNode = n;
+    }
+    double pop() {
+        Node* temp = topNode;
+        double v = temp->data;
+        topNode = topNode->next;
+        delete temp;
+        return v;
+    }
+    ~Stack() {
+        while (!isEmpty())
+            pop();
+    }
+};
+
+double power(double base, int exp) {
+    double result = 1;
+    for (int i = 0; i < exp; i++)
+        result = result * base;
+    return result;
+}
+
+bool evaluatePostfix(string postfix, double values[], double& answer) {
+    Stack s;
+    for (int i = 0; i < (int)postfix.length(); i++) {
+        char c = postfix[i];
+        if (c == ' ')
+            continue;
+        if (c >= 'a' && c <= 'z') {
+            s.push(values[c - 'a']);
+        } else if (c >= 'A' && c <= 'Z') {
+            s.push(values[c - 'A']);
+        } else if (c >= '0' && c <= '9') {
+            s.push(c - '0');
+        } else {
+            if (s.isEmpty())
+                return false;
+            double b = s.pop();
+            if (s.isEmpty())
+                return false;
+            double a = s.pop();
+            if (c == '+')
+                s.push(a + b);
+            else if (c == '-')
+                s.push(a - b);
+            else if (c == '*')
+                s.push(a * b);
+            else if (c == '/') {
+                if (b == 0)
+                    return false;
+                s.push(a / b);
+            } else if (c == '^')
+                s.push(power(a, (int)b));
+            else
+                return false;
+        }
+    }
+    if (s.isEmpty())
+        return false;
+    answer = s.pop();
+    if (!s.isEmpty())
+        return false;
+    return true;
+}
+
+int main() {
+    double values[26];
+    for (int i = 0; i < 26; i++)
+        values[i] = 0;
+    values['a' - 'a'] = 5;
+    values['b' - 'a'] = 3;
+    values['c' - 'a'] = 2;
+    values['d' - 'a'] = 4;
+    cout << "Values: a = 5, b = 3, c = 2, d = 4, e = 0" << endl << endl;
+
+    string tests[] = {"ab+c*d-", "abc*+", "ab-c/", "ab^c+", "ab+*", "ae/", "82/3-"};
+    for (int i = 0; i < 7; i++) {
+        double answer = 0;
+        cout << tests[i] << "  ->  ";
+        if (evaluatePostfix(tests[i], values, answer))
+            cout << answer << endl;
+        else
+            cout << "Invalid expression or division by zero" << endl;
+    }
+    return 0;
+}

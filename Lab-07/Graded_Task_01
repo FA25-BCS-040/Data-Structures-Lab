@@ -1,0 +1,90 @@
+// Lab 7 - Graded Task 1
+// BST traversals with Right Branch Priority:
+//   Pre Order  (NRL): Node, Right, Left
+//   In Order   (RNL): Right, Node, Left
+//   Post Order (RLN): Right, Left, Node
+#include <iostream>
+using namespace std;
+
+struct BST {
+    int data;
+    BST *left;
+    BST *right;
+    BST(int d) : data(d), left(NULL), right(NULL) {}
+};
+
+BST *root = NULL;
+
+// Iterative insertion
+void insert(int value) {
+    BST *curr = new BST(value);
+    if (root == NULL) {
+        root = curr;
+        return;
+    }
+    BST *p = root, *q = NULL;
+    while (p != NULL) {
+        q = p;
+        if (value > p->data)
+            p = p->right;
+        else
+            p = p->left;
+    }
+    if (value > q->data)
+        q->right = curr;
+    else
+        q->left = curr;
+}
+
+// Pre Order (NRL)
+void preOrderNRL(BST *node) {
+    if (node != NULL) {
+        cout << node->data << " ";
+        preOrderNRL(node->right);
+        preOrderNRL(node->left);
+    }
+}
+
+// In Order (RNL) -> prints in descending order
+void inOrderRNL(BST *node) {
+    if (node != NULL) {
+        inOrderRNL(node->right);
+        cout << node->data << " ";
+        inOrderRNL(node->left);
+    }
+}
+
+// Post Order (RLN)
+void postOrderRLN(BST *node) {
+    if (node != NULL) {
+        postOrderRLN(node->right);
+        postOrderRLN(node->left);
+        cout << node->data << " ";
+    }
+}
+
+int main() {
+    int values[] = {50, 30, 70, 20, 40, 60, 80, 35, 65};
+    int n = sizeof(values) / sizeof(values[0]);
+
+    cout << "Inserting: ";
+    for (int i = 0; i < n; i++) {
+        cout << values[i] << " ";
+        insert(values[i]);
+    }
+    cout << "\n\n";
+
+    cout << "Pre Order  (NRL): ";
+    preOrderNRL(root);
+    cout << "\n";
+
+    cout << "In Order   (RNL): ";
+    inOrderRNL(root);
+    cout << "\n";
+
+    cout << "Post Order (RLN): ";
+    postOrderRLN(root);
+    cout << "\n";
+
+    return 0;
+}

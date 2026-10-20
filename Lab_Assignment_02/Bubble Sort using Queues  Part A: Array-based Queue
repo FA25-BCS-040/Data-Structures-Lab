@@ -1,0 +1,109 @@
+#include <iostream>
+
+using namespace std;
+
+class ArrayQueue {
+private:
+    int* arr;
+    int frontIndex;
+    int rearIndex;
+    int count;
+    int capacity;
+
+public:
+    ArrayQueue(int cap = 100) {
+        capacity = cap;
+        arr = new int[capacity];
+        frontIndex = 0;
+        rearIndex = -1;
+        count = 0;
+    }
+
+    ~ArrayQueue() {
+        delete[] arr;
+    }
+
+    bool isEmpty() const {
+        return count == 0;
+    }
+
+    bool isFull() const {
+        return count == capacity;
+    }
+
+    void enqueue(int val) {
+        if (isFull()) {
+            cout << "Queue Overflow!" << endl;
+            return;
+        }
+        rearIndex = (rearIndex + 1) % capacity;
+        arr[rearIndex] = val;
+        count++;
+    }
+
+    int dequeue() {
+        if (isEmpty()) {
+            cout << "Queue Underflow!" << endl;
+            return -1;
+        }
+        int val = arr[frontIndex];
+        frontIndex = (frontIndex + 1) % capacity;
+        count--;
+        return val;
+    }
+
+    int size() const {
+        return count;
+    }
+
+    void display() {
+        if (isEmpty()) {
+            cout << "Queue Empty!" << endl;
+            return;
+        }
+        int idx = frontIndex;
+        for (int i = 0; i < count; i++) {
+            cout << arr[idx] << " ";
+            idx = (idx + 1) % capacity;
+        }
+        cout << endl;
+    }
+};
+
+void bubbleSortArrayQueue(ArrayQueue& q) {
+    int n = q.size();
+    for (int i = 0; i < n; i++) {
+        int prev = q.dequeue();
+        for (int j = 0; j < n - 1; j++) {
+            int curr = q.dequeue();
+            if (prev > curr) {
+                q.enqueue(curr);
+            } else {
+                q.enqueue(prev);
+                prev = curr;
+            }
+        }
+        q.enqueue(prev);
+    }
+}
+
+int main() {
+    ArrayQueue q(10);
+
+    q.enqueue(64);
+    q.enqueue(34);
+    q.enqueue(25);
+    q.enqueue(12);
+    q.enqueue(22);
+    q.enqueue(11);
+
+    cout << "Original Queue: ";
+    q.display();
+
+    bubbleSortArrayQueue(q);
+
+    cout << "Sorted Queue: ";
+    q.display();
+
+    return 0;
+}

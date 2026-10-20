@@ -1,0 +1,116 @@
+#include <iostream>
+using namespace std;
+
+struct BST {
+    int data;
+    BST *left;
+    BST *right;
+    BST(int d) : data(d), left(NULL), right(NULL) {}
+};
+
+BST *root = NULL;
+
+void insert(int value) {
+    BST *curr = new BST(value);
+    if (root == NULL) {
+        root = curr;
+        return;
+    }
+    BST *p = root, *q = NULL;
+    while (p != NULL) {
+        q = p;
+        if (value > p->data)
+            p = p->right;
+        else
+            p = p->left;
+    }
+    if (value > q->data)
+        q->right = curr;
+    else
+        q->left = curr;
+}
+
+void inOrder(BST *node) {
+    if (node != NULL) {
+        inOrder(node->left);
+        cout << node->data << " ";
+        inOrder(node->right);
+    }
+}
+
+// Returns the node with the smallest key in a subtree
+BST *minNode(BST *node) {
+    while (node != NULL && node->left != NULL)
+        node = node->left;
+    return node;
+}
+
+// Deletes key from the subtree rooted at node; returns the new subtree root
+BST *deleteNode(BST *node, int key) {
+    if (node == NULL) {
+        cout << "Value " << key << " not found in the tree.\n";
+        return NULL;
+    }
+
+    if (key < node->data) {
+        node->left = deleteNode(node->left, key);
+    } else if (key > node->data) {
+        node->right = deleteNode(node->right, key);
+    } else {
+        // Case 1: no child
+        if (node->left == NULL && node->right == NULL) {
+            delete node;
+            return NULL;
+        }
+        // Case 2: one child
+        if (node->left == NULL) {
+            BST *temp = node->right;
+            delete node;
+            return temp;
+        }
+        if (node->right == NULL) {
+            BST *temp = node->left;
+            delete node;
+            return temp;
+        }
+        // Case 3: two children -> copy inorder successor, then delete it
+        BST *succ = minNode(node->right);
+        node->data = succ->data;
+        node->right = deleteNode(node->right, succ->data);
+    }
+    return node;
+}
+
+int main() {
+    int values[] = {50, 30, 70, 20, 40, 60, 80, 35, 65};
+    int n = sizeof(values) / sizeof(values[0]);
+
+    for (int i = 0; i < n; i++)
+        insert(values[i]);
+
+    cout << "Original tree (inorder): ";
+    inOrder(root);
+    cout << "\n\n";
+
+    cout << "Delete 20 (no child):\n";
+    root = deleteNode(root, 20);
+    inOrder(root);
+    cout << "\n\n";
+
+    cout << "Delete 40 (one child, 35):\n";
+    root = deleteNode(root, 40);
+    inOrder(root);
+    cout << "\n\n";
+
+    cout << "Delete 50 (two children, the root):\n";
+    root = deleteNode(root, 50);
+    inOrder(root);
+    cout << "\n\n";
+
+    cout << "Delete 999 (not present):\n";
+    root = deleteNode(root, 999);
+    inOrder(root);
+    cout << "\n";
+
+    return 0;
+}

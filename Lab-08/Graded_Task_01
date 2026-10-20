@@ -1,0 +1,164 @@
+// Lab 8 - Graded Task 1
+// All types of rotations used in an AVL Tree:
+//   LL case -> single Right rotation
+//   RR case -> single Left rotation
+//   LR case -> Left rotation on left child, then Right rotation
+//   RL case -> Right rotation on right child, then Left rotation
+#include <iostream>
+using namespace std;
+
+struct node {
+    int data;
+    node *left;
+    node *right;
+    int ht;  // height of the subtree (a NULL tree has height 0, a leaf has 1)
+    node(int d) : data(d), left(NULL), right(NULL), ht(1) {}
+};
+
+int height(node *T) {
+    return (T == NULL) ? 0 : T->ht;
+}
+
+void updateHeight(node *T) {
+    int lh = height(T->left);
+    int rh = height(T->right);
+    T->ht = 1 + (lh > rh ? lh : rh);
+}
+
+// Balance factor = height(left) - height(right)
+int BF(node *T) {
+    if (T == NULL)
+        return 0;
+    return height(T->left) - height(T->right);
+}
+
+// ---------- The rotations ----------
+
+// Right rotation (fixes the LL case)
+node *rotateRight(node *x) {
+    node *y = x->left;
+    x->left = y->right;
+    y->right = x;
+    updateHeight(x);
+    updateHeight(y);
+    return y;
+}
+
+// Left rotation (fixes the RR case)
+node *rotateLeft(node *x) {
+    node *y = x->right;
+    x->right = y->left;
+    y->left = x;
+    updateHeight(x);
+    updateHeight(y);
+    return y;
+}
+
+// LL: left child is left-heavy -> one right rotation
+node *LL(node *T) {
+    cout << "   [LL case -> Right rotation at " << T->data << "]\n";
+    return rotateRight(T);
+}
+
+// RR: right child is right-heavy -> one left rotation
+node *RR(node *T) {
+    cout << "   [RR case -> Left rotation at " << T->data << "]\n";
+    return rotateLeft(T);
+}
+
+// LR: left child is right-heavy -> left rotate the child, then right rotate T
+node *LR(node *T) {
+    cout << "   [LR case -> Left rotation at " << T->left->data
+         << ", then Right rotation at " << T->data << "]\n";
+    T->left = rotateLeft(T->left);
+    return rotateRight(T);
+}
+
+// RL: right child is left-heavy -> right rotate the child, then left rotate T
+node *RL(node *T) {
+    cout << "   [RL case -> Right rotation at " << T->right->data
+         << ", then Left rotation at " << T->data << "]\n";
+    T->right = rotateRight(T->right);
+    return rotateLeft(T);
+}
+
+// ---------- Insertion (uses the rotations) ----------
+node *insert(node *T, int x) {
+    if (T == NULL)
+        return new node(x);
+
+    if (x > T->data) {
+        T->right = insert(T->right, x);
+        if (BF(T) == -2) {
+            if (x > T->right->data)
+                T = RR(T);
+            else
+                T = RL(T);
+        }
+    } else if (x < T->data) {
+        T->left = insert(T->left, x);
+        if (BF(T) == 2) {
+            if (x < T->left->data)
+                T = LL(T);
+            else
+                T = LR(T);
+        }
+    }
+    // duplicates are ignored
+
+    updateHeight(T);
+    return T;
+}
+
+void preorder(node *T) {
+    if (T != NULL) {
+        cout << T->data << "(bf=" << BF(T) << ") ";
+        preorder(T->left);
+        preorder(T->right);
+    }
+}
+
+void freeTree(node *T) {
+    if (T != NULL) {
+        freeTree(T->left);
+        freeTree(T->right);
+        delete T;
+    }
+}
+
+// Builds a fresh tree from the given values and shows the result
+void demo(const char *title, int a, int b, int c) {
+    cout << title << "\n";
+    node *root = NULL;
+    int vals[3] = {a, b, c};
+    for (int i = 0; i < 3; i++) {
+        cout << " insert " << vals[i] << "\n";
+        root = insert(root, vals[i]);
+    }
+    cout << " Resulting tree (preorder): ";
+    preorder(root);
+    cout << "\n\n";
+    freeTree(root);
+}
+
+int main() {
+    demo("1) LL case (insert 30, 20, 10)", 30, 20, 10);
+    demo("2) RR case (insert 10, 20, 30)", 10, 20, 30);
+    demo("3) LR case (insert 30, 10, 20)", 30, 10, 20);
+    demo("4) RL case (insert 10, 30, 20)", 10, 30, 20);
+
+    // A larger example that triggers several rotations in one tree
+    cout << "5) Mixed example (insert 10 20 30 40 50 25)\n";
+    node *root = NULL;
+    int vals[] = {10, 20, 30, 40, 50, 25};
+    for (int i = 0; i < 6; i++) {
+        cout << " insert " << vals[i] << "\n";
+        root = insert(root, vals[i]);
+    }
+    cout << " Resulting tree (preorder): ";
+    preorder(root);
+    cout << "\n";
+    freeTree(root);
+
+    return 0;
+}

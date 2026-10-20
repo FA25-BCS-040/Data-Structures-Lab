@@ -1,0 +1,161 @@
+// Lab 8 - Graded Task 2
+// Level order (breadth-first) traversal of an AVL Tree.
+// A queue holds the nodes of the current level while their children are
+// added for the next level.
+#include <iostream>
+using namespace std;
+
+struct node {
+    int data;
+    node *left;
+    node *right;
+    int ht;
+    node(int d) : data(d), left(NULL), right(NULL), ht(1) {}
+};
+
+int height(node *T) {
+    return (T == NULL) ? 0 : T->ht;
+}
+
+void updateHeight(node *T) {
+    int lh = height(T->left);
+    int rh = height(T->right);
+    T->ht = 1 + (lh > rh ? lh : rh);
+}
+
+int BF(node *T) {
+    return (T == NULL) ? 0 : height(T->left) - height(T->right);
+}
+
+node *rotateRight(node *x) {
+    node *y = x->left;
+    x->left = y->right;
+    y->right = x;
+    updateHeight(x);
+    updateHeight(y);
+    return y;
+}
+
+node *rotateLeft(node *x) {
+    node *y = x->right;
+    x->right = y->left;
+    y->left = x;
+    updateHeight(x);
+    updateHeight(y);
+    return y;
+}
+
+node *insert(node *T, int x) {
+    if (T == NULL)
+        return new node(x);
+
+    if (x > T->data) {
+        T->right = insert(T->right, x);
+        if (BF(T) == -2) {
+            if (x < T->right->data)            // RL
+                T->right = rotateRight(T->right);
+            T = rotateLeft(T);                 // RR (or second step of RL)
+        }
+    } else if (x < T->data) {
+        T->left = insert(T->left, x);
+        if (BF(T) == 2) {
+            if (x > T->left->data)             // LR
+                T->left = rotateLeft(T->left);
+            T = rotateRight(T);                // LL (or second step of LR)
+        }
+    }
+    updateHeight(T);
+    return T;
+}
+
+// ---------- Simple array-based queue of node pointers ----------
+class NodeQueue {
+    node **items;
+    int front, rear, count, cap;
+public:
+    NodeQueue(int capacity) : front(0), rear(0), count(0), cap(capacity) {
+        items = new node *[cap];
+    }
+    ~NodeQueue() { delete[] items; }
+    bool isEmpty() { return count == 0; }
+    int size() { return count; }
+    void enqueue(node *n) {
+        items[rear] = n;
+        rear = (rear + 1) % cap;
+        count++;
+    }
+    node *dequeue() {
+        node *n = items[front];
+        front = (front + 1) % cap;
+        count--;
+        return n;
+    }
+};
+
+int countNodes(node *T) {
+    return (T == NULL) ? 0 : 1 + countNodes(T->left) + countNodes(T->right);
+}
+
+// Prints the tree level by level, one line per level
+void levelOrder(node *root) {
+    if (root == NULL) {
+        cout << "Tree is empty.\n";
+        return;
+    }
+    NodeQueue q(countNodes(root));
+    q.enqueue(root);
+    int level = 0;
+
+    while (!q.isEmpty()) {
+        int nodesInLevel = q.size();
+        cout << "Level " << level << ": ";
+        for (int i = 0; i < nodesInLevel; i++) {
+            node *cur = q.dequeue();
+            cout << cur->data << " ";
+            if (cur->left != NULL)
+                q.enqueue(cur->left);
+            if (cur->right != NULL)
+                q.enqueue(cur->right);
+        }
+        cout << "\n";
+        level++;
+    }
+}
+
+// Prints all nodes in one line in level order
+void levelOrderFlat(node *root) {
+    if (root == NULL)
+        return;
+    NodeQueue q(countNodes(root));
+    q.enqueue(root);
+    while (!q.isEmpty()) {
+        node *cur = q.dequeue();
+        cout << cur->data << " ";
+        if (cur->left != NULL)
+            q.enqueue(cur->left);
+        if (cur->right != NULL)
+            q.enqueue(cur->right);
+    }
+    cout << "\n";
+}
+
+int main() {
+    node *root = NULL;
+    int values[] = {10, 20, 30, 40, 50, 25, 5, 3, 60, 70};
+    int n = sizeof(values) / sizeof(values[0]);
+
+    cout << "Inserting into AVL tree: ";
+    for (int i = 0; i < n; i++) {
+        cout << values[i] << " ";
+        root = insert(root, values[i]);
+    }
+    cout << "\n\n";
+
+    cout << "Level order traversal (by level):\n";
+    levelOrder(root);
+
+    cout << "\nLevel order traversal (single line): ";
+    levelOrderFlat(root);
+
+    return 0;
+}

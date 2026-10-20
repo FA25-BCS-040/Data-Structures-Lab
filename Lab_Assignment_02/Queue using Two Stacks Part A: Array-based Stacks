@@ -1,0 +1,102 @@
+#include <iostream>
+
+using namespace std;
+
+class ArrayStack {
+private:
+    int* arr;
+    int topIndex;
+    int capacity;
+
+public:
+    ArrayStack(int cap = 100) {
+        capacity = cap;
+        arr = new int[capacity];
+        topIndex = -1;
+    }
+
+    ~ArrayStack() {
+        delete[] arr;
+    }
+
+    bool isEmpty() const {
+        return topIndex == -1;
+    }
+
+    bool isFull() const {
+        return topIndex == capacity - 1;
+    }
+
+    void push(int val) {
+        if (isFull()) {
+            cout << "Stack Overflow!" << endl;
+            return;
+        }
+        arr[++topIndex] = val;
+    }
+
+    int pop() {
+        if (isEmpty()) {
+            cout << "Stack Underflow!" << endl;
+            return -1;
+        }
+        return arr[topIndex--];
+    }
+
+    int peek() const {
+        if (isEmpty()) {
+            return -1;
+        }
+        return arr[topIndex];
+    }
+};
+
+class QueueTwoStacksArray {
+private:
+    ArrayStack s1;
+    ArrayStack s2;
+
+public:
+    QueueTwoStacksArray(int cap = 100) : s1(cap), s2(cap) {}
+
+    void enqueue(int val) {
+        s1.push(val);
+    }
+
+    int dequeue() {
+        if (s2.isEmpty()) {
+            while (!s1.isEmpty()) {
+                s2.push(s1.pop());
+            }
+        }
+        if (s2.isEmpty()) {
+            cout << "Queue Underflow!" << endl;
+            return -1;
+        }
+        return s2.pop();
+    }
+
+    bool isEmpty() {
+        return s1.isEmpty() && s2.isEmpty();
+    }
+};
+
+int main() {
+    QueueTwoStacksArray q(10);
+
+    q.enqueue(10);
+    q.enqueue(20);
+    q.enqueue(30);
+
+    cout << q.dequeue() << endl;
+    cout << q.dequeue() << endl;
+
+    q.enqueue(40);
+    q.enqueue(50);
+
+    while (!q.isEmpty()) {
+        cout << q.dequeue() << endl;
+    }
+
+    return 0;
+}

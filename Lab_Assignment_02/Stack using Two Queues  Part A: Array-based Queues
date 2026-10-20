@@ -1,0 +1,107 @@
+#include <iostream>
+
+using namespace std;
+
+class ArrayQueue {
+private:
+    int* arr;
+    int frontIndex;
+    int rearIndex;
+    int count;
+    int capacity;
+
+public:
+    ArrayQueue(int cap = 100) {
+        capacity = cap;
+        arr = new int[capacity];
+        frontIndex = 0;
+        rearIndex = -1;
+        count = 0;
+    }
+
+    ~ArrayQueue() {
+        delete[] arr;
+    }
+
+    bool isEmpty() const {
+        return count == 0;
+    }
+
+    bool isFull() const {
+        return count == capacity;
+    }
+
+    void enqueue(int val) {
+        if (isFull()) {
+            cout << "Queue Overflow!" << endl;
+            return;
+        }
+        rearIndex = (rearIndex + 1) % capacity;
+        arr[rearIndex] = val;
+        count++;
+    }
+
+    int dequeue() {
+        if (isEmpty()) {
+            cout << "Queue Underflow!" << endl;
+            return -1;
+        }
+        int val = arr[frontIndex];
+        frontIndex = (frontIndex + 1) % capacity;
+        count--;
+        return val;
+    }
+
+    int getCount() const {
+        return count;
+    }
+};
+
+class StackTwoQueuesArray {
+private:
+    ArrayQueue q1;
+    ArrayQueue q2;
+
+public:
+    StackTwoQueuesArray(int cap = 100) : q1(cap), q2(cap) {}
+
+    void push(int val) {
+        q2.enqueue(val);
+        while (!q1.isEmpty()) {
+            q2.enqueue(q1.dequeue());
+        }
+        while (!q2.isEmpty()) {
+            q1.enqueue(q2.dequeue());
+        }
+    }
+
+    int pop() {
+        if (q1.isEmpty()) {
+            cout << "Stack Underflow!" << endl;
+            return -1;
+        }
+        return q1.dequeue();
+    }
+
+    bool isEmpty() {
+        return q1.isEmpty();
+    }
+};
+
+int main() {
+    StackTwoQueuesArray s(10);
+
+    s.push(11);
+    s.push(22);
+    s.push(33);
+
+    cout << s.pop() << endl;
+    
+    s.push(44);
+
+    while (!s.isEmpty()) {
+        cout << s.pop() << endl;
+    }
+
+    return 0;
+}

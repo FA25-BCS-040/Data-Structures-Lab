@@ -1,0 +1,109 @@
+#include <iostream>
+
+using namespace std;
+
+struct QueueNode {
+    int data;
+    QueueNode* next;
+    QueueNode(int val) : data(val), next(nullptr) {}
+};
+
+class LinkedQueue {
+private:
+    QueueNode* frontNode;
+    QueueNode* rearNode;
+    int count;
+
+public:
+    LinkedQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
+
+    ~LinkedQueue() {
+        while (!isEmpty()) {
+            dequeue();
+        }
+    }
+
+    bool isEmpty() const {
+        return frontNode == nullptr;
+    }
+
+    void enqueue(int val) {
+        QueueNode* newNode = new QueueNode(val);
+        if (rearNode == nullptr) {
+            frontNode = rearNode = newNode;
+        } else {
+            rearNode->next = newNode;
+            rearNode = newNode;
+        }
+        count++;
+    }
+
+    int dequeue() {
+        if (isEmpty()) {
+            cout << "Queue Underflow!" << endl;
+            return -1;
+        }
+        QueueNode* temp = frontNode;
+        int val = temp->data;
+        frontNode = frontNode->next;
+        if (frontNode == nullptr) {
+            rearNode = nullptr;
+        }
+        delete temp;
+        count--;
+        return val;
+    }
+
+    int size() const {
+        return count;
+    }
+
+    void display() {
+        QueueNode* temp = frontNode;
+        while (temp != nullptr) {
+            cout << temp->data << " ";
+            temp = temp->next;
+        }
+        cout << endl;
+    }
+};
+
+void selectionSortLinkedQueue(LinkedQueue& q) {
+    int n = q.size();
+    for (int i = 0; i < n; i++) {
+        int minVal = q.dequeue();
+        for (int j = 1; j < n - i; j++) {
+            int curr = q.dequeue();
+            if (curr < minVal) {
+                q.enqueue(minVal);
+                minVal = curr;
+            } else {
+                q.enqueue(curr);
+            }
+        }
+        q.enqueue(minVal);
+    }
+    for (int i = 0; i < n; i++) {
+        q.enqueue(q.dequeue());
+    }
+}
+
+int main() {
+    LinkedQueue q;
+
+    q.enqueue(15);
+    q.enqueue(3);
+    q.enqueue(8);
+    q.enqueue(1);
+    q.enqueue(9);
+
+    cout << "Original Queue: ";
+    q.display();
+
+    selectionSortLinkedQueue(q);
+
+    cout << "Sorted Queue: ";
+    q.display();
+
+    return 0;
+}

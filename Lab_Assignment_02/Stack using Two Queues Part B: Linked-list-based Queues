@@ -1,0 +1,100 @@
+#include <iostream>
+
+using namespace std;
+
+struct QueueNode {
+    int data;
+    QueueNode* next;
+    QueueNode(int val) : data(val), next(nullptr) {}
+};
+
+class LinkedQueue {
+private:
+    QueueNode* frontNode;
+    QueueNode* rearNode;
+
+public:
+    LinkedQueue() : frontNode(nullptr), rearNode(nullptr) {}
+
+    ~LinkedQueue() {
+        while (!isEmpty()) {
+            dequeue();
+        }
+    }
+
+    bool isEmpty() const {
+        return frontNode == nullptr;
+    }
+
+    void enqueue(int val) {
+        QueueNode* newNode = new QueueNode(val);
+        if (rearNode == nullptr) {
+            frontNode = rearNode = newNode;
+            return;
+        }
+        rearNode->next = newNode;
+        rearNode = newNode;
+    }
+
+    int dequeue() {
+        if (isEmpty()) {
+            cout << "Queue Underflow!" << endl;
+            return -1;
+        }
+        QueueNode* temp = frontNode;
+        int val = temp->data;
+        frontNode = frontNode->next;
+        if (frontNode == nullptr) {
+            rearNode = nullptr;
+        }
+        delete temp;
+        return val;
+    }
+};
+
+class StackTwoQueuesLinkedList {
+private:
+    LinkedQueue q1;
+    LinkedQueue q2;
+
+public:
+    void push(int val) {
+        q2.enqueue(val);
+        while (!q1.isEmpty()) {
+            q2.enqueue(q1.dequeue());
+        }
+        while (!q2.isEmpty()) {
+            q1.enqueue(q2.dequeue());
+        }
+    }
+
+    int pop() {
+        if (q1.isEmpty()) {
+            cout << "Stack Underflow!" << endl;
+            return -1;
+        }
+        return q1.dequeue();
+    }
+
+    bool isEmpty() {
+        return q1.isEmpty();
+    }
+};
+
+int main() {
+    StackTwoQueuesLinkedList s;
+
+    s.push(5);
+    s.push(10);
+    s.push(15);
+
+    cout << s.pop() << endl;
+
+    s.push(20);
+
+    while (!s.isEmpty()) {
+        cout << s.pop() << endl;
+    }
+
+    return 0;
+}
